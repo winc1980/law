@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./article.schema.json",
+  "title": "Article",
+  "description": "条文の形式",
+  "type": "object",
+  "properties": {
+    "caption": {
+      "type": "string",
+      "description": "条文の見出し"
+    },
+    "content": {
+      "type": "string",
+      "description": "条文の内容。項を分ける場合1項をここに記述し、2項以降はparagraphsに記述する。"
+    },
+    "paragraphs": {
+      "type": "array",
+      "description": "条文の項",
+      "items": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "項の内容"
+          },
+          "items": {
+            "type": "array",
+            "description": "項の箇条書き(号)",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["content"],
+        "additionalProperties": false
+      }
+    },
+    "items": {
+      "type": "array",
+      "description": "条文の箇条書き(号)",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["caption", "content"],
+  "additionalProperties": false
+}

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./law.schema.json",
+  "title": "Law",
+  "description": "会則・運営規則の形式",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "タイトル"
+    },
+    "lawType": {
+      "type": "string",
+      "description": "規則の種別",
+      "enum": ["会則", "運営規則", "執行部公示", "執行部決定", "その他"]
+    },
+    "effect": {
+      "type": "string",
+      "description": "効力",
+      "enum": ["案", "廃案", "施行待ち", "施行中", "廃止"]
+    },
+    "preamble": {
+      "type": "string",
+      "description": "前文"
+    },
+    "articles": {
+      "type": "array",
+      "description": "条文",
+      "items": {
+        "$ref": "./article.schema.json"
+      }
+    },
+    "chapters": {
+      "type": "array",
+      "description": "章",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "章のタイトル"
+          },
+          "articles": {
+            "type": "array",
+            "description": "章に含まれる条文",
+            "items": {
+              "$ref": "./article.schema.json"
+            }
+          }
+        },
+        "required": ["title", "articles"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["title", "lawType", "effect"],
+  "oneOf": [
+    {
+      "required": ["articles"],
+      "not": {
+        "required": ["chapters"]
+      }
+    },
+    {
+      "required": ["chapters"],
+      "not": {
+        "required": ["articles"]
+      }
+    }
+  ],
+  "additionalProperties": false
+}
