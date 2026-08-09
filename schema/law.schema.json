@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./law.schema.json",
+  "title": "Law",
+  "description": "会則・運営規則の形式",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "エディタ補完のためのスキーマ参照。内容には影響しない。"
+    },
+    "title": {
+      "type": "string",
+      "description": "タイトル"
+    },
+    "lawType": {
+      "type": "string",
+      "description": "規則の種別",
+      "enum": ["会則", "運営規則", "執行部公示", "執行部決定", "その他"]
+    },
+    "effect": {
+      "type": "string",
+      "description": "効力",
+      "enum": ["案", "廃案", "施行待ち", "施行中", "廃止"]
+    },
+    "preamble": {
+      "type": "string",
+      "description": "前文"
+    },
+    "articles": {
+      "type": "array",
+      "description": "条文",
+      "items": {
+        "$ref": "./article.schema.json"
+      }
+    },
+    "chapters": {
+      "type": "array",
+      "description": "章",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "章の安定識別子。章番号は配列順から自動採番されるため、恒久リンクにはこのIDを用いる。",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "title": {
+            "type": "string",
+            "description": "章のタイトル"
+          },
+          "articles": {
+            "type": "array",
+            "description": "章に含まれる条文",
+            "items": {
+              "$ref": "./article.schema.json"
+            }
+          }
+        },
+        "required": ["id", "title", "articles"],
+        "additionalProperties": false
+      }
+    },
+    "supplementaryProvisions": {
+      "type": "array",
+      "description": "附則。制定および改正のたびに1件追加する。条番号の採番対象には含まれない。",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "制定・改正の別",
+            "enum": ["制定", "一部改正", "全部改正", "廃止"]
+          },
+          "effectiveDate": {
+            "type": "string",
+            "description": "施行日 (YYYY-MM-DD)",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "resolvedOn": {
+            "type": "string",
+            "description": "議決日 (YYYY-MM-DD)",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "resolvedBy": {
+            "type": "string",
+            "description": "議決機関",
+            "enum": ["総会", "理事会", "執行部"]
+          },
+          "reason": {
+            "type": "string",
+            "description": "改正の理由・趣旨"
+          },
+          "articles": {
+            "type": "array",
+            "description": "附則に置かれる条文（経過措置など）",
+            "items": {
+              "$ref": "./article.schema.json"
+            }
+          }
+        },
+        "required": ["kind", "effectiveDate"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["title", "lawType", "effect"],
+  "oneOf": [
+    {
+      "required": ["articles"],
+      "not": {
+        "required": ["chapters"]
+      }
+    },
+    {
+      "required": ["chapters"],
+      "not": {
+        "required": ["articles"]
+      }
+    }
+  ],
+  "additionalProperties": false
+}

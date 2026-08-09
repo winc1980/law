@@ -1,0 +1,24 @@
+{
+  "name": "winc-law",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "コンピュータ研究会・WINC の会則および諸規則",
+  "scripts": {
+    "gen:types": "json2ts --input schema/law.schema.json --output src/types/law.d.ts --cwd schema",
+    "validate": "node scripts/validate.mjs",
+    "dev": "astro dev",
+    "build": "npm run validate && astro build",
+    "preview": "astro preview",
+    "check": "npm run validate && astro check"
+  },
+  "dependencies": {
+    "astro": "^5.14.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "ajv": "^8.17.1",
+    "json-schema-to-typescript": "^15.0.4",
+    "typescript": "^5.9.2"
+  }
+}

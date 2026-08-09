@@ -1,0 +1,35 @@
+name: 検証
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: スキーマ検証とビルド
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # 生成物が schema/ と食い違ったまま放置されないようにする
+      - name: 型定義が最新か確認
+        run: |
+          npm run gen:types
+          git diff --exit-code src/types/law.d.ts
+
+      - run: npm run validate
+
+      - run: npx astro check
+
+      - run: npx astro build

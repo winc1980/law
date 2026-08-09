@@ -5,6 +5,11 @@
   "description": "条文の形式",
   "type": "object",
   "properties": {
+    "id": {
+      "type": "string",
+      "description": "条文の安定識別子。条番号は配列順から自動採番されるため改正で変動するが、このIDは一度付けたら変更しない。恒久リンクおよび条文間の参照に用いる。",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
     "caption": {
       "type": "string",
       "description": "条文の見出し"
@@ -43,6 +48,6 @@
       }
     }
   },
-  "required": ["caption", "content"],
+  "required": ["id", "caption", "content"],
   "additionalProperties": false
 }

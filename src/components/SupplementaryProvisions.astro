@@ -1,0 +1,77 @@
+---
+import type { Law } from '../types/law';
+import ArticleView from './Article.astro';
+import { toJapaneseEra } from '../lib/era';
+
+interface Props {
+  provisions: NonNullable<Law['supplementaryProvisions']>;
+  /** 「本会則は、…から施行する。」の主語。 */
+  subject: string;
+}
+
+const { provisions, subject } = Astro.props;
+
+/** 附則の一文を組み立てる。会則原文の表記をそのまま再現している。 */
+function sentence(kind: string, effectiveDate: string): string {
+  const suffix = kind === '制定' ? '' : `（${kind}）`;
+  return `${subject}は、${toJapaneseEra(effectiveDate)}${suffix}から施行する。`;
+}
+---
+
+<section class="supplementary" id="supplementary-provisions" aria-labelledby="supplementary-heading">
+  <h2 id="supplementary-heading">附則</h2>
+
+  <ol class="list">
+    {
+      provisions.map((provision) => (
+        <li>
+          <p class="sentence">{sentence(provision.kind, provision.effectiveDate)}</p>
+          {(provision.resolvedOn || provision.resolvedBy || provision.reason) && (
+            <p class="meta">
+              {provision.resolvedOn && `${toJapaneseEra(provision.resolvedOn)} `}
+              {provision.resolvedBy && `${provision.resolvedBy}議決`}
+              {provision.reason && ` / ${provision.reason}`}
+            </p>
+          )}
+          {provision.articles?.map((article, i) => (
+            <ArticleView article={article} label={`第${i + 1}条`} />
+          ))}
+        </li>
+      ))
+    }
+  </ol>
+</section>
+
+<style>
+  .supplementary {
+    margin-top: 3.5rem;
+    padding-top: 1.6rem;
+    border-top: 2px solid var(--ink);
+  }
+
+  h2 {
+    font-family: var(--mincho);
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0 0 1.2rem;
+  }
+
+  .list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .sentence {
+    margin: 0;
+  }
+
+  .meta {
+    margin: 0.1rem 0 0;
+    color: var(--ink-faint);
+    font-size: 0.84rem;
+  }
+</style>

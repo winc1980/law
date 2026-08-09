@@ -1,12 +1,15 @@
 {
+  "$schema": "../schema/law.schema.json",
   "title": "コンピュータ研究会・WINC会則",
   "lawType": "会則",
   "effect": "施行中",
   "chapters": [
     {
+      "id": "name",
       "title": "名称",
       "articles": [
         {
+          "id": "name",
           "caption": "名称",
           "content": "本会は、コンピュータ研究会・WINCと称する。",
           "paragraphs": [
@@ -21,13 +24,16 @@
       ]
     },
     {
+      "id": "purpose-and-activities",
       "title": "目的と事業",
       "articles": [
         {
+          "id": "purpose",
           "caption": "目的",
           "content": "本会は、会員が、情報サービスを安全かつ有効に活用または提供するための知識、技術および資質の向上を図ることを目的とする。"
         },
         {
+          "id": "activities",
           "caption": "事業",
           "content": "本会は、前条の目的を達成するため、次の事業を行う。",
           "items": [
@@ -40,9 +46,11 @@
       ]
     },
     {
+      "id": "composition",
       "title": "構成",
       "articles": [
         {
+          "id": "members",
           "caption": "会員",
           "content": "本会の会員は次のとおりとする。",
           "items": [
@@ -53,9 +61,11 @@
       ]
     },
     {
+      "id": "rights-and-duties",
       "title": "会員の権利と義務",
       "articles": [
         {
+          "id": "member-rights",
           "caption": "会員の権利",
           "content": "本会の会員は次の権利を有する。",
           "items": [
@@ -65,6 +75,7 @@
           ]
         },
         {
+          "id": "member-duties",
           "caption": "会員の義務",
           "content": "本会の会員は次の義務を負う。",
           "items": [
@@ -77,13 +88,16 @@
       ]
     },
     {
+      "id": "admission-and-withdrawal",
       "title": "会員の入会と退会",
       "articles": [
         {
+          "id": "admission",
           "caption": "入会",
           "content": "本会への入会手続きを行ったものを、理事会の決議をもって会員とする。"
         },
         {
+          "id": "loss-of-membership",
           "caption": "会員資格の喪失",
           "content": "本会の会員は、次のいずれかに該当するときは、その資格を喪失する。",
           "items": [
@@ -93,15 +107,22 @@
           ]
         },
         {
+          "id": "withdrawal",
           "caption": "退会",
           "content": "退会を希望する会員は、本会の事務局にて退会手続きを行わなければならない。ただし、第8条に該当するときには、理事会において退会を審議・確認するものとする。"
         },
         {
+          "id": "officers",
           "caption": "役員",
           "content": "本会に次の役員をおく。その任期は1年とし、再任はさまたげない。",
-          "items": ["幹事長 1名", "副幹事長 1名", "会計 1名"]
+          "items": [
+            "幹事長 1名",
+            "副幹事長 1名",
+            "会計 1名"
+          ]
         },
         {
+          "id": "officer-election",
           "caption": "役員の選出",
           "content": "役員は正会員の中から次の方法で選出する。",
           "items": [
@@ -110,6 +131,7 @@
           ]
         },
         {
+          "id": "officer-duties",
           "caption": "役員の任務",
           "content": "役員の任務は次のとおりとする。",
           "items": [
@@ -119,6 +141,7 @@
           ]
         },
         {
+          "id": "president",
           "caption": "会長",
           "content": "本会に会長をおく。",
           "paragraphs": [
@@ -130,9 +153,11 @@
       ]
     },
     {
+      "id": "meetings",
       "title": "会議",
       "articles": [
         {
+          "id": "general-meeting",
           "caption": "総会",
           "content": "総会は、年1回開催し、次の事項を審議する。",
           "items": [
@@ -143,23 +168,28 @@
           ]
         },
         {
+          "id": "general-meeting-quorum",
           "caption": "総会の定足数および議決",
           "content": "総会は、会員総数の過半数をもって定足数とし、出席会員の過半数をもって議決する。定足数に達しないときは、理事会の決議をもって代える。"
         },
         {
+          "id": "board-convocation",
           "caption": "理事会の招集",
           "content": "理事会は、必要に応じて幹事長がこれを召集する。"
         },
         {
+          "id": "board-composition",
           "caption": "理事会の構成および決議",
           "content": "理事会は、幹事長、副幹事長、会計で構成し、その決議は全会一致による。"
         }
       ]
     },
     {
+      "id": "facilities",
       "title": "施設と設備",
       "articles": [
         {
+          "id": "clubroom",
           "caption": "部室",
           "content": "本会は、部室をおく。",
           "paragraphs": [
@@ -169,14 +199,17 @@
           ]
         },
         {
+          "id": "clubroom-eligibility",
           "caption": "部室利用資格",
           "content": "本会の部室の利用を希望する会員で、本会の事務局にて部室利用手続きを行ったものについて、理事会の決議をもって部室利用資格を与える。"
         },
         {
+          "id": "filming-consent",
           "caption": "撮影への同意および著作権",
           "content": "本会の部室を利用するものは、理事会の明示的な許可を得た撮影者による映像・写真撮影に同意したものとみなされる。また、撮影された全ての映像・写真の著作権は幹事長に帰属するものとする。"
         },
         {
+          "id": "clubroom-eligibility-loss",
           "caption": "部室利用資格の喪失",
           "content": "本会の部室について、次のいずれかに該当する行為を行ったものは、その利用資格を喪失する。",
           "items": [
@@ -190,17 +223,21 @@
       ]
     },
     {
+      "id": "finance",
       "title": "会計",
       "articles": [
         {
+          "id": "fiscal-year",
           "caption": "会計年度",
           "content": "本会の会計年度は4月1日に始まり、翌年3月31日に終わる。"
         },
         {
+          "id": "expenses",
           "caption": "経費",
           "content": "本会の経費には、入会費・会費・補助金その他の収入をあてる。"
         },
         {
+          "id": "admission-fee",
           "caption": "入会費",
           "content": "本会の入会費は次のとおりとする。",
           "items": [
@@ -209,6 +246,7 @@
           ]
         },
         {
+          "id": "membership-fee",
           "caption": "会費",
           "content": "本会の会費は次のとおりとする。",
           "items": [
@@ -222,39 +260,41 @@
       ]
     },
     {
+      "id": "bylaws",
       "title": "会則",
       "articles": [
         {
+          "id": "amendment",
           "caption": "会則の変更",
           "content": "本会則を変更する場合には、理事会の決議を経なければならない。"
         }
       ]
+    }
+  ],
+  "supplementaryProvisions": [
+    {
+      "kind": "制定",
+      "effectiveDate": "2019-03-01"
     },
     {
-      "title": "付則",
-      "articles": [
-        {
-          "caption": "施行日",
-          "content": "本会則は、平成31年3月1日から施行する。",
-          "paragraphs": [
-            {
-              "content": "本会則は、令和元年9月29日（一部改正）から施行する。"
-            },
-            {
-              "content": "本会則は、令和元年10月2日（一部改正）から施行する。"
-            },
-            {
-              "content": "本会則は、令和2年4月1日（一部改正）から施行する。"
-            },
-            {
-              "content": "本会則は、令和3年4月1日（一部改正）から施行する。"
-            },
-            {
-              "content": "本会則は、令和4年4月1日（一部改正）から施行する。"
-            }
-          ]
-        }
-      ]
+      "kind": "一部改正",
+      "effectiveDate": "2019-09-29"
+    },
+    {
+      "kind": "一部改正",
+      "effectiveDate": "2019-10-02"
+    },
+    {
+      "kind": "一部改正",
+      "effectiveDate": "2020-04-01"
+    },
+    {
+      "kind": "一部改正",
+      "effectiveDate": "2021-04-01"
+    },
+    {
+      "kind": "一部改正",
+      "effectiveDate": "2022-04-01"
     }
   ]
 }
