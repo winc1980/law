@@ -7,32 +7,51 @@
   "properties": {
     "$schema": {
       "type": "string",
-      "description": "エディタ補完のためのスキーマ参照。内容には影響しない。"
+      "description": "エディタ補完のためのスキーマ参照。内容には影響しない。",
+      "title": "スキーマ参照"
     },
     "title": {
       "type": "string",
-      "description": "タイトル"
+      "description": "タイトル",
+      "title": "タイトル",
+      "minLength": 1
     },
     "lawType": {
       "type": "string",
       "description": "規則の種別",
-      "enum": ["会則", "運営規則", "執行部公示", "執行部決定", "その他"]
+      "enum": [
+        "会則",
+        "運営規則",
+        "執行部公示",
+        "執行部決定",
+        "その他"
+      ],
+      "title": "種別"
     },
     "effect": {
       "type": "string",
       "description": "効力",
-      "enum": ["案", "廃案", "施行待ち", "施行中", "廃止"]
+      "enum": [
+        "案",
+        "廃案",
+        "施行待ち",
+        "施行中",
+        "廃止"
+      ],
+      "title": "効力"
     },
     "preamble": {
       "type": "string",
-      "description": "前文"
+      "description": "前文",
+      "title": "前文"
     },
     "articles": {
       "type": "array",
       "description": "条文",
       "items": {
         "$ref": "./article.schema.json"
-      }
+      },
+      "title": "条文"
     },
     "chapters": {
       "type": "array",
@@ -43,23 +62,32 @@
           "id": {
             "type": "string",
             "description": "章の安定識別子。章番号は配列順から自動採番されるため、恒久リンクにはこのIDを用いる。",
-            "pattern": "^[a-z][a-z0-9-]*$"
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "title": "ID"
           },
           "title": {
             "type": "string",
-            "description": "章のタイトル"
+            "description": "章のタイトル",
+            "title": "章のタイトル",
+            "minLength": 1
           },
           "articles": {
             "type": "array",
             "description": "章に含まれる条文",
             "items": {
               "$ref": "./article.schema.json"
-            }
+            },
+            "title": "条文"
           }
         },
-        "required": ["id", "title", "articles"],
+        "required": [
+          "id",
+          "title",
+          "articles"
+        ],
         "additionalProperties": false
-      }
+      },
+      "title": "章"
     },
     "supplementaryProvisions": {
       "type": "array",
@@ -70,52 +98,84 @@
           "kind": {
             "type": "string",
             "description": "制定・改正の別",
-            "enum": ["制定", "一部改正", "全部改正", "廃止"]
+            "enum": [
+              "制定",
+              "一部改正",
+              "全部改正",
+              "廃止"
+            ],
+            "title": "種別"
           },
           "effectiveDate": {
             "type": "string",
             "description": "施行日 (YYYY-MM-DD)",
-            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "title": "施行日"
           },
           "resolvedOn": {
             "type": "string",
             "description": "議決日 (YYYY-MM-DD)",
-            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "title": "議決日"
           },
           "resolvedBy": {
             "type": "string",
             "description": "議決機関",
-            "enum": ["総会", "理事会", "執行部"]
+            "enum": [
+              "総会",
+              "理事会",
+              "執行部"
+            ],
+            "title": "議決機関"
           },
           "reason": {
             "type": "string",
-            "description": "改正の理由・趣旨"
+            "description": "改正の理由・趣旨",
+            "title": "改正の理由",
+            "minLength": 1
           },
           "articles": {
             "type": "array",
             "description": "附則に置かれる条文（経過措置など）",
             "items": {
               "$ref": "./article.schema.json"
-            }
+            },
+            "title": "附則の条文"
           }
         },
-        "required": ["kind", "effectiveDate"],
+        "required": [
+          "kind",
+          "effectiveDate"
+        ],
         "additionalProperties": false
-      }
+      },
+      "title": "附則"
     }
   },
-  "required": ["title", "lawType", "effect"],
+  "required": [
+    "title",
+    "lawType",
+    "effect"
+  ],
   "oneOf": [
     {
-      "required": ["articles"],
+      "required": [
+        "articles"
+      ],
       "not": {
-        "required": ["chapters"]
+        "required": [
+          "chapters"
+        ]
       }
     },
     {
-      "required": ["chapters"],
+      "required": [
+        "chapters"
+      ],
       "not": {
-        "required": ["articles"]
+        "required": [
+          "articles"
+        ]
       }
     }
   ],

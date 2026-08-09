@@ -30,6 +30,8 @@ jobs:
 
       - run: npm run validate
 
+      - run: npm test
+
       - run: npx astro check
 
       - run: npx astro build

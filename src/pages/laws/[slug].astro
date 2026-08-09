@@ -5,12 +5,13 @@ import SupplementaryProvisions from '../../components/SupplementaryProvisions.as
 import { laws } from '../../lib/laws';
 import { toKanjiNumeral } from '../../lib/numbering';
 import { toJapaneseEra } from '../../lib/era';
+import { url } from '../../lib/url';
 
 export function getStaticPaths() {
   return laws.map((entry) => ({ params: { slug: entry.slug }, props: entry }));
 }
 
-const { law, chapters, articles, lastEffectiveDate } = Astro.props;
+const { slug, law, chapters, articles, lastEffectiveDate } = Astro.props;
 const chapterless = articles.filter(
   (a) => !chapters.some((c) => c.articles.includes(a)),
 );
@@ -25,6 +26,10 @@ const chapterless = articles.filter(
       {lastEffectiveDate && <span class="date">最終改正 {toJapaneseEra(lastEffectiveDate)} 施行</span>}
     </p>
     {law.preamble && <p class="preamble">{law.preamble}</p>}
+    <p class="propose">
+      <a href={url(`edit/${slug}/`)}>改正案をつくる</a>
+      <span>編集して、プルリクエストとして提出できます。</span>
+    </p>
   </header>
 
   <nav class="toc" aria-labelledby="toc-heading">
@@ -131,6 +136,21 @@ const chapterless = articles.filter(
 
   .preamble {
     margin: 1.5rem 0 0;
+  }
+
+  .propose {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.3rem 0.8rem;
+    margin: 1.4rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .propose span {
+    color: var(--ink-faint);
+    font-size: 0.82rem;
   }
 
   .toc {

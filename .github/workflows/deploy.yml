@@ -29,7 +29,7 @@ jobs:
 
       - run: npm ci
 
-      # npm run build はスキーマ検証を通してから astro build する
+      # npm run build はスキーマ検証とテストを通してから astro build する
       - run: npm run build
 
       - uses: actions/upload-pages-artifact@v3

@@ -1,0 +1,361 @@
+/* react-jsonschema-form が出力するマークアップに当てるスタイル。
+   RJSF の標準テーマは Bootstrap 由来のクラス名を出すが Bootstrap は入れていないので、
+   ここで一から組む。会則の階層（章 → 条 → 項 → 号）が読み取れることを最優先にする。 */
+
+.editor {
+  --field-gap: 0.9rem;
+}
+
+.editor fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.editor legend {
+  padding: 0;
+  font-family: var(--mincho);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* --- 入力欄 --- */
+
+.editor .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-block: var(--field-gap);
+  min-width: 0;
+}
+
+.editor .control-label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.editor .required {
+  color: var(--draft);
+  margin-left: 0.15em;
+}
+
+.editor .field-description,
+.editor .help-block {
+  font-size: 0.79rem;
+  line-height: 1.7;
+  color: var(--ink-faint);
+  margin: 0;
+}
+
+.editor input[type='text'],
+.editor input[type='number'],
+.editor textarea,
+.editor select {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--rule-strong);
+  background: var(--ground);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  border-radius: 0;
+}
+
+.editor textarea {
+  resize: vertical;
+  min-height: 3.4rem;
+}
+
+.editor input:focus,
+.editor textarea:focus,
+.editor select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: var(--accent);
+}
+
+/* --- 配列（章・条・項・号） --- */
+
+.editor .rjsf-array-item {
+  border-left: 2px solid var(--rule-strong);
+  padding-left: 1rem;
+  margin-block: 1.1rem;
+  min-width: 0;
+}
+
+.editor .rjsf-array-item > .GridColumn:first-child {
+  min-width: 0;
+}
+
+/* 配列項目のツールバー（上へ・下へ・削除） */
+.editor .rjsf-array-item .btn-group,
+.editor .rjsf-array-item-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.editor .rjsf-array-item + .rjsf-array-item-add {
+  margin-top: 0.8rem;
+}
+
+/* --- ボタン --- */
+
+.editor button,
+.editor .button {
+  display: inline-block;
+  font: inherit;
+  font-size: 0.83rem;
+  line-height: 1.6;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--rule-strong);
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 0;
+}
+
+.editor button:hover,
+.editor .button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.editor button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editor button:disabled:hover {
+  border-color: var(--rule-strong);
+  color: var(--ink);
+}
+
+.editor button.primary,
+.editor .button.primary {
+  font-size: 0.92rem;
+  padding: 0.5rem 1.2rem;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--ground);
+}
+
+.editor button.primary:hover:not(:disabled),
+.editor .button.primary:hover {
+  opacity: 0.85;
+  color: var(--ground);
+}
+
+.editor .actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.editor .hint {
+  font-size: 0.83rem;
+  color: var(--ink-faint);
+}
+
+/* --- エラー --- */
+
+.editor .panel-danger,
+.editor .rjsf-field-error {
+  border: 1px solid var(--draft);
+  background: var(--draft-bg);
+  padding: 0.8rem 1rem;
+  margin-block: 1rem;
+}
+
+.editor .panel-danger .panel-title {
+  font-family: var(--mincho);
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+}
+
+.editor .text-danger,
+.editor .panel-danger ul {
+  color: var(--draft);
+  font-size: 0.85rem;
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.editor .text-danger {
+  padding-left: 0;
+  list-style: none;
+}
+
+/* --- 提出前に弾いたとき --- */
+
+.editor .invalid {
+  border: 1px solid var(--draft);
+  background: var(--draft-bg);
+  padding: 1rem 1.2rem;
+  margin-top: 1.2rem;
+  scroll-margin-top: 1.5rem;
+}
+
+.editor .invalid h2 {
+  font-family: var(--mincho);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--draft);
+  margin: 0 0 0.4rem;
+}
+
+.editor .invalid > p {
+  margin: 0 0 0.8rem;
+  font-size: 0.88rem;
+}
+
+.editor .invalid ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.editor .invalid li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.7rem;
+  font-size: 0.9rem;
+}
+
+.editor .invalid .where {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  flex: none;
+  align-self: center;
+}
+
+/* --- 確認パネル --- */
+
+.editor .review {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--ink);
+  scroll-margin-top: 1.5rem;
+}
+
+.editor .review h2 {
+  font-family: var(--mincho);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+.editor .review h3 {
+  font-family: var(--mincho);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 2rem 0 0.7rem;
+}
+
+.editor .changes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.editor .changes li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.8rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.editor .changes .kind {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid currentColor;
+  color: var(--ink-muted);
+}
+
+.editor .changes .kind[data-kind='追加'] {
+  color: var(--accent);
+}
+
+.editor .changes .kind[data-kind='削除'] {
+  color: var(--draft);
+}
+
+.editor .changes .label {
+  font-weight: 600;
+}
+
+.editor .changes .detail {
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+}
+
+.editor .warnings {
+  border: 1px solid var(--draft);
+  background: var(--draft-bg);
+  padding: 0.9rem 1.1rem;
+  margin-top: 1.5rem;
+}
+
+.editor .warnings h3 {
+  margin-top: 0;
+  color: var(--draft);
+}
+
+.editor .warnings ul {
+  margin: 0 0 0.6rem;
+  padding-left: 1.2rem;
+}
+
+.editor .warnings p {
+  margin: 0;
+  font-size: 0.87rem;
+  color: var(--ink-muted);
+}
+
+.editor .steps {
+  padding-left: 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.editor details {
+  margin-top: 2rem;
+  border: 1px solid var(--rule);
+}
+
+.editor summary {
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.88rem;
+  background: var(--panel);
+}
+
+.editor pre {
+  margin: 0;
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.7;
+  max-height: 30rem;
+}
