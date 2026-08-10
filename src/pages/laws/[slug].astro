@@ -1,20 +1,17 @@
 ---
 import Base from '../../layouts/Base.astro';
-import ArticleView from '../../components/Article.astro';
-import SupplementaryProvisions from '../../components/SupplementaryProvisions.astro';
+import LawBody from '../../components/LawBody';
 import { laws } from '../../lib/laws';
 import { toKanjiNumeral } from '../../lib/numbering';
 import { toJapaneseEra } from '../../lib/era';
 import { url } from '../../lib/url';
+import '../../styles/law.css';
 
 export function getStaticPaths() {
   return laws.map((entry) => ({ params: { slug: entry.slug }, props: entry }));
 }
 
-const { slug, law, chapters, articles, lastEffectiveDate } = Astro.props;
-const chapterless = articles.filter(
-  (a) => !chapters.some((c) => c.articles.includes(a)),
-);
+const { slug, law, chapters, chapterless, lastEffectiveDate } = Astro.props;
 ---
 
 <Base title={law.title} description={`${law.title}（${law.effect}）の全文`}>
@@ -71,40 +68,8 @@ const chapterless = articles.filter(
     </ol>
   </nav>
 
-  {
-    chapters.map((chapter) => (
-      <section class="chapter" id={`ch-${chapter.id}`} aria-labelledby={`ch-${chapter.id}-heading`}>
-        <h2 id={`ch-${chapter.id}-heading`}>
-          <span class="ch-number">第{toKanjiNumeral(chapter.number)}章</span>
-          {chapter.title}
-        </h2>
-        <div class="articles">
-          {chapter.articles.map(({ article, number }) => (
-            <ArticleView article={article} label={`第${number}条`} />
-          ))}
-        </div>
-      </section>
-    ))
-  }
-
-  {
-    chapterless.length > 0 && (
-      <div class="articles articles-flat">
-        {chapterless.map(({ article, number }) => (
-          <ArticleView article={article} label={`第${number}条`} />
-        ))}
-      </div>
-    )
-  }
-
-  {
-    law.supplementaryProvisions && law.supplementaryProvisions.length > 0 && (
-      <SupplementaryProvisions
-        provisions={law.supplementaryProvisions}
-        subject={law.lawType === '会則' ? '本会則' : '本規則'}
-      />
-    )
-  }
+  {/* クライアント指令を付けないので、サーバーで描いた HTML だけが出る。JS は増えない。 */}
+  <LawBody law={law} anchors />
 </Base>
 
 <style>
@@ -206,39 +171,5 @@ const chapterless = articles.filter(
     .toc .range {
       display: none;
     }
-  }
-
-  .chapter {
-    margin-bottom: 3rem;
-    scroll-margin-top: 1.5rem;
-  }
-
-  .chapter h2 {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0 0.9rem;
-    font-family: var(--mincho);
-    font-size: 1.2rem;
-    font-weight: 600;
-    line-height: 1.6;
-    margin: 0 0 1.4rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--rule-strong);
-  }
-
-  .ch-number {
-    color: var(--ink-muted);
-    font-size: 0.85em;
-  }
-
-  .articles {
-    display: flex;
-    flex-direction: column;
-    gap: 1.6rem;
-  }
-
-  .articles-flat {
-    margin-bottom: 3rem;
   }
 </style>

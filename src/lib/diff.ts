@@ -1,3 +1,4 @@
+import { toKanjiNumeral } from './numbering';
 import type { Article, Law } from '../types/law';
 
 export interface Change {
@@ -127,6 +128,164 @@ export function summarize(before: Law, after: Law): Change[] {
   }
 
   return changes;
+}
+
+// --- 差分ペイン用 ---
+
+export interface DiffLine {
+  label: string;
+  before?: string;
+  after?: string;
+}
+
+export interface ArticleDiff {
+  id: string;
+  kind: '追加' | '削除' | '変更';
+  caption: string;
+  numberBefore?: number;
+  numberAfter?: number;
+  lines: DiffLine[];
+}
+
+/** 条を、見出し・本文・項・号という比較できる単位にほどく。 */
+function unfold(article: Article): DiffLine[] {
+  const lines: DiffLine[] = [{ label: '見出し', before: article.caption }];
+  lines.push({ label: '本文', before: article.content });
+
+  for (const [i, item] of (article.items ?? []).entries()) {
+    lines.push({ label: `第${toKanjiNumeral(i + 1)}号`, before: item });
+  }
+  for (const [i, paragraph] of (article.paragraphs ?? []).entries()) {
+    lines.push({ label: `第${i + 2}項`, before: paragraph.content });
+    for (const [j, item] of (paragraph.items ?? []).entries()) {
+      lines.push({ label: `第${i + 2}項 第${toKanjiNumeral(j + 1)}号`, before: item });
+    }
+  }
+  return lines;
+}
+
+function pairLines(before: Article, after: Article): DiffLine[] {
+  const from = new Map(unfold(before).map((line) => [line.label, line.before!]));
+  const to = new Map(unfold(after).map((line) => [line.label, line.before!]));
+  const labels = [...new Set([...from.keys(), ...to.keys()])];
+
+  return labels
+    .map((label) => ({ label, before: from.get(label), after: to.get(label) }))
+    .filter((line) => line.before !== line.after);
+}
+
+/**
+ * 条ごとの差分。条の対応づけは id で行うので、条番号がずれても
+ * 「別の条が追加・削除された」ようには見えない。
+ */
+export function articleDiffs(before: Law, after: Law): ArticleDiff[] {
+  const from = new Map(place(before).map((p) => [p.article.id, p]));
+  const to = new Map(place(after).map((p) => [p.article.id, p]));
+  const out: ArticleDiff[] = [];
+
+  for (const [id, now] of to) {
+    const old = from.get(id);
+    if (!old) {
+      out.push({
+        id,
+        kind: '追加',
+        caption: now.article.caption,
+        numberAfter: now.number,
+        lines: unfold(now.article).map(({ label, before: text }) => ({ label, after: text })),
+      });
+      continue;
+    }
+
+    const lines = pairLines(old.article, now.article);
+    if (lines.length === 0) continue;
+
+    out.push({
+      id,
+      kind: '変更',
+      caption: now.article.caption || old.article.caption,
+      numberBefore: old.number,
+      numberAfter: now.number,
+      lines,
+    });
+  }
+
+  for (const [id, old] of from) {
+    if (to.has(id)) continue;
+    out.push({
+      id,
+      kind: '削除',
+      caption: old.article.caption,
+      numberBefore: old.number,
+      lines: unfold(old.article),
+    });
+  }
+
+  return out.sort((a, b) => (a.numberAfter ?? a.numberBefore ?? 0) - (b.numberAfter ?? b.numberBefore ?? 0));
+}
+
+export interface ReferenceProblem {
+  kind: '不明' | 'ずれ';
+  articleId: string;
+  message: string;
+}
+
+/** 本文・項・号のすべての文字列。 */
+function* texts(article: Article): Generator<string> {
+  yield article.content;
+  for (const item of article.items ?? []) yield item;
+  for (const paragraph of article.paragraphs ?? []) {
+    yield paragraph.content;
+    for (const item of paragraph.items ?? []) yield item;
+  }
+}
+
+/**
+ * 「第N条」という参照が、改正の前後で同じ条を指し続けているかを見る。
+ *
+ * 条を1つ挿入すれば、それ以降の条番号はすべて繰り下がる。本文の参照は
+ * 文字列として書かれているので黙って別の条を指すようになる。これは条の増減を
+ * 伴う改正で最も起きやすく、最も気づきにくい事故なので、編集中に出す。
+ */
+export function referenceProblems(before: Law, after: Law): ReferenceProblem[] {
+  const oldOrder = place(before);
+  const newOrder = place(after);
+  const problems: ReferenceProblem[] = [];
+  const seen = new Set<string>();
+
+  for (const { article, number } of newOrder) {
+    for (const text of texts(article)) {
+      for (const [, digits] of text.matchAll(/第(\d+)条/g)) {
+        const target = Number(digits);
+        const key = `${article.id}:${target}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        const now = newOrder[target - 1];
+        if (!now) {
+          problems.push({
+            kind: '不明',
+            articleId: article.id,
+            message: `第${number}条（${article.caption}）が、存在しない第${target}条を参照しています`,
+          });
+          continue;
+        }
+
+        const then = oldOrder[target - 1];
+        if (then && then.article.id !== now.article.id) {
+          problems.push({
+            kind: 'ずれ',
+            articleId: article.id,
+            message:
+              `第${number}条（${article.caption}）の「第${target}条」は、` +
+              `改正前は「${then.article.caption}」を指していましたが、` +
+              `改正後は「${now.article.caption}」を指します`,
+          });
+        }
+      }
+    }
+  }
+
+  return problems;
 }
 
 /** 条番号での参照が、改正後も実在する条を指しているかを見る。 */

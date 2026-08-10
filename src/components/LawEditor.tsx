@@ -1,287 +1,335 @@
-import Form from '@rjsf/core';
-import type { IChangeEvent } from '@rjsf/core';
-import type {
-  CustomValidator,
-  RJSFSchema,
-  RJSFValidationError,
-  TranslatableString,
-  UiSchema,
-} from '@rjsf/utils';
-import validator from '@rjsf/validator-ajv8';
-import { useMemo, useState } from 'react';
-import { buttonTemplates } from './buttons';
-import { danglingReferences, summarize, type Change } from '../lib/diff';
-import { collectArticleIds, fillMissingIds, serializeLaw } from '../lib/serialize';
-import { editUrl } from '../lib/config';
+import { useCallback, useDeferredValue, useMemo, useState } from 'react';
+import DiffPane from './DiffPane';
+import EditableText from './EditableText';
+import LawBody, { type RenderDocumentText } from './LawBody';
+import SubmitDialog from './SubmitDialog';
+import { articleDiffs, referenceProblems, summarize } from '../lib/diff';
+import {
+  addArticle,
+  addChapter,
+  addItem,
+  addParagraph,
+  moveArticle,
+  removeArticle,
+  removeChapter,
+  removeItem,
+  removeParagraph,
+  setChapterTitle,
+  setLawTitle,
+  setText,
+  type Position,
+} from '../lib/edit';
+import { serializeLaw } from '../lib/serialize';
+import { describeErrors, validateLaw } from '../lib/validate';
 import type { Law } from '../types/law';
 
 interface Props {
   slug: string;
   original: Law;
-  schema: RJSFSchema;
-  uiSchema: UiSchema;
   dataPath: string;
+  backHref: string;
 }
 
-/** RJSF が英語で出すボタンやメッセージを日本語にする。 */
-const JA: Partial<Record<TranslatableString, string>> = {
-  Item: '項目',
-  'No items yet. Use the button below to add some.': 'まだ項目がありません。下のボタンから追加してください。',
-  Add: '追加',
-  'Add Item': '追加',
-  Copy: '複製',
-  'Move down': '下へ',
-  'Move up': '上へ',
-  Remove: '削除',
-  Errors: 'エラー',
-  Close: '閉じる',
-  Yes: 'はい',
-  No: 'いいえ',
-};
+const UNDO_LIMIT = 50;
 
-function translateString(stringToTranslate: TranslatableString, params?: string[]): string {
-  const translated = JA[stringToTranslate];
-  if (!translated) return params ? interpolate(stringToTranslate, params) : stringToTranslate;
-  return params ? interpolate(translated, params) : translated;
-}
+export default function LawEditor({ slug, original, dataPath, backHref }: Props) {
+  const [law, setLaw] = useState<Law>(original);
+  const [past, setPast] = useState<Law[]>([]);
+  /** 取り消しで値を巻き戻したときに、入力欄を作り直すための世代番号。 */
+  const [generation, setGeneration] = useState(0);
+  const [tab, setTab] = useState<'edit' | 'diff'>('edit');
+  const [submitting, setSubmitting] = useState(false);
 
-function interpolate(template: string, params: string[]): string {
-  return params.reduce((acc, value, i) => acc.replaceAll(`%${i + 1}`, value), template);
-}
+  /** 差分と検証は入力に少し遅れて追いつけばよい。打鍵のたびに全条を比べない。 */
+  const settled = useDeferredValue(law);
 
-// フォーム上の見出し（「章-1」「条文-2」など）と同じ言葉を使う。
-// 条番号ではなく画面上の位置を指すので、「第2条」とは書かない。
-const PATH_LABELS: Record<string, string> = {
-  chapters: '章',
-  articles: '条文',
-  paragraphs: '項',
-  items: '号',
-  supplementaryProvisions: '附則',
-  caption: '見出し',
-  content: '内容',
-  title: 'タイトル',
-  id: 'ID',
-  lawType: '種別',
-  effect: '効力',
-  preamble: '前文',
-  kind: '種別',
-  effectiveDate: '施行日',
-  resolvedOn: '議決日',
-  resolvedBy: '議決機関',
-  reason: '改正の理由',
-};
-
-/** ".chapters.0.articles.6.caption" を「章1 / 条文7 / 見出し」にする。 */
-function describePath(property: string | undefined): string {
-  if (!property) return '全体';
-
-  const parts = property.replace(/^\./, '').split('.').filter(Boolean);
-  const out: string[] = [];
-
-  for (const [i, part] of parts.entries()) {
-    if (/^\d+$/.test(part)) continue;
-    const label = PATH_LABELS[part] ?? part;
-    const index = parts[i + 1];
-    out.push(index && /^\d+$/.test(index) ? `${label}${Number(index) + 1}` : label);
-  }
-
-  return out.join(' / ') || '全体';
-}
-
-export default function LawEditor({ slug, original, schema, uiSchema, dataPath }: Props) {
-  const [formData, setFormData] = useState<Law>(original);
-  const [review, setReview] = useState<{ changes: Change[]; warnings: string[] } | null>(null);
-  const [invalid, setInvalid] = useState<RJSFValidationError[]>([]);
-  const [copied, setCopied] = useState(false);
-
-  const json = useMemo(() => serializeLaw(formData, dataPath), [formData, dataPath]);
+  const json = useMemo(() => serializeLaw(law, dataPath), [law, dataPath]);
   const baseline = useMemo(() => serializeLaw(original, dataPath), [original, dataPath]);
   const untouched = json === baseline;
 
-  function handleChange(event: IChangeEvent<Law>) {
-    if (!event.formData) return;
-    setFormData(fillMissingIds(event.formData));
-    setReview(null);
-    setCopied(false);
-  }
+  const meta = useMemo(
+    () => summarize(original, settled).filter((change) => change.kind === '設定'),
+    [original, settled],
+  );
+  const articles = useMemo(() => articleDiffs(original, settled), [original, settled]);
+  const problems = useMemo(() => referenceProblems(original, settled), [original, settled]);
+  const errors = useMemo(() => describeErrors(settled, validateLaw(settled)), [settled]);
 
-  const customValidate: CustomValidator<Law> = (data, errors) => {
-    if (!data) return errors;
+  /** 文字を書き換えるだけの変更。取り消しの履歴には積まない。 */
+  const edit = useCallback((fn: (law: Law) => Law) => setLaw((current) => fn(current)), []);
 
-    const ids = collectArticleIds(data);
-    const duplicates = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
-    for (const id of duplicates) {
-      errors.addError(`条の ID「${id}」が重複しています。ID は条ごとに固有である必要があります。`);
-    }
-    return errors;
-  };
+  /** 条や章を足す・消す・動かす。取り消せるようにする。 */
+  const restructure = useCallback((fn: (law: Law) => Law) => {
+    setLaw((current) => {
+      setPast((history) => [...history, current].slice(-UNDO_LIMIT));
+      return fn(current);
+    });
+  }, []);
 
-  function handleSubmit({ formData: data }: IChangeEvent<Law>) {
-    if (!data) return;
-    setInvalid([]);
-    setReview({ changes: summarize(original, data), warnings: danglingReferences(data) });
-    requestAnimationFrame(() =>
-      document.getElementById('review')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-    );
-  }
-
-  function handleError(errors: RJSFValidationError[]) {
-    setReview(null);
-    setInvalid(errors);
-    requestAnimationFrame(() =>
-      document.getElementById('invalid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-    );
-  }
-
-  function transformErrors(errors: RJSFValidationError[]): RJSFValidationError[] {
-    return errors.map((error) => {
-      if (error.name === 'required' || error.name === 'minLength') {
-        return { ...error, message: '入力してください' };
+  const undo = useCallback(() => {
+    setPast((history) => {
+      const previous = history.at(-1);
+      if (previous) {
+        setLaw(previous);
+        setGeneration((n) => n + 1);
       }
-      if (error.name === 'pattern' && error.property?.endsWith('.id')) {
-        return { ...error, message: '半角英小文字・数字・ハイフンで、英小文字から始めてください' };
-      }
-      if (error.name === 'pattern') return { ...error, message: 'YYYY-MM-DD の形式で入力してください' };
-      if (error.name === 'additionalProperties') {
-        return { ...error, message: 'スキーマにない項目が含まれています' };
-      }
-      if (error.name === 'enum') return { ...error, message: '一覧から選んでください' };
-      return error;
+      return history.slice(0, -1);
+    });
+  }, []);
+
+  function focusArticle(id: string) {
+    setTab('edit');
+    requestAnimationFrame(() => {
+      const node = document.getElementById(`art-${id}`);
+      node?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      node?.querySelector<HTMLElement>('textarea, input')?.focus();
     });
   }
 
-  async function copyJson() {
-    try {
-      await navigator.clipboard.writeText(json);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-      alert('クリップボードにコピーできませんでした。下の「JSON を表示」から手動でコピーしてください。');
+  const renderText: RenderDocumentText = (slot, value) => {
+    if (slot.at === 'chapterTitle') {
+      return (
+        <EditableText
+          value={value}
+          multiline={false}
+          ariaLabel="章のタイトル"
+          placeholder="章のタイトル"
+          invalid={!value}
+          onChange={(next) => edit((l) => setChapterTitle(l, slot.chapter, next))}
+        />
+      );
     }
-  }
 
-  function downloadJson() {
-    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${slug}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-  }
+    const at: Position = { chapter: slot.chapter, article: slot.article };
+    const isCaption = slot.slot.kind === 'caption';
+
+    return (
+      <EditableText
+        value={value}
+        multiline={!isCaption}
+        ariaLabel={isCaption ? '条の見出し' : '条文'}
+        placeholder={isCaption ? '見出し' : '本文'}
+        invalid={!value}
+        onChange={(next) => edit((l) => setText(l, at, slot.slot, next))}
+      />
+    );
+  };
+
+  const changeCount = meta.length + articles.length;
 
   return (
-    <div className="editor">
-      <Form
-        schema={schema}
-        uiSchema={uiSchema}
-        formData={formData}
-        validator={validator}
-        customValidate={customValidate}
-        transformErrors={transformErrors}
-        translateString={translateString}
-        templates={{ ButtonTemplates: buttonTemplates }}
-        showErrorList={false}
-        // ブラウザ標準の必須チェックに任せると、画面外の空欄があるときに submit が
-        // 黙って止まり、何も起きていないように見える。スキーマ検証に一本化する。
-        noHtml5Validate
-        onChange={handleChange}
-        onSubmit={handleSubmit}
-        onError={handleError}
-      >
-        <div className="actions">
-          <button type="submit" className="primary" disabled={untouched}>
-            変更内容を確認
-          </button>
-          {untouched && <span className="hint">まだ変更されていません。</span>}
-        </div>
+    <div className="editor" data-tab={tab}>
+      <header className="topbar">
+        <a className="back" href={backHref} aria-label="会則の閲覧ページに戻る">
+          ←
+        </a>
 
-        {invalid.length > 0 && (
-          <div id="invalid" className="invalid" role="alert">
-            <h2>入力に不足があります</h2>
-            <p>次の項目を直してから、もう一度「変更内容を確認」を押してください。</p>
-            <ul>
-              {invalid.map((error, i) => (
-                <li key={i}>
-                  <span className="where">{describePath(error.property)}</span>
-                  <span>{error.message}</span>
-                </li>
-              ))}
-            </ul>
+        <span className="lawname">
+          <EditableText
+            value={law.title}
+            multiline={false}
+            ariaLabel="法令名"
+            invalid={!law.title}
+            onChange={(next) => edit((l) => setLawTitle(l, next))}
+          />
+        </span>
+
+        {/* 種別と効力は議決で決まるもので、文書を書き換えて決めるものではない */}
+        <span className="chip" title="種別は編集できません">
+          {law.lawType}
+        </span>
+        <span className="chip" data-effect={law.effect} title="効力は議決で決まります">
+          {law.effect}
+        </span>
+
+        <span className="spacer" />
+
+        <span className="counts">
+          <span className="chip" data-count={changeCount > 0 ? 'on' : undefined}>
+            変更 {changeCount}件
+          </span>
+          {problems.length > 0 && (
+            <span className="chip warn">警告 {problems.length}件</span>
+          )}
+          {errors.length > 0 && <span className="chip error">未入力 {errors.length}件</span>}
+        </span>
+
+        <button type="button" onClick={undo} disabled={past.length === 0}>
+          元に戻す
+        </button>
+        <button
+          type="button"
+          className="primary"
+          onClick={() => setSubmitting(true)}
+          disabled={untouched}
+        >
+          提出する
+        </button>
+      </header>
+
+      <div className="tabs" role="tablist" aria-label="編集と差分の切り替え">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'edit'}
+          onClick={() => setTab('edit')}
+        >
+          編集
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'diff'}
+          onClick={() => setTab('diff')}
+        >
+          差分{changeCount > 0 && ` (${changeCount})`}
+        </button>
+      </div>
+
+      <div className="panes">
+        <section className="pane pane-edit" aria-label="本文の編集">
+          <div className="pane-inner" key={generation}>
+            <LawBody
+              law={law}
+              renderText={renderText}
+              articleToolbar={(at) => (
+                <span className="tools">
+                  <button type="button" onClick={() => restructure((l) => moveArticle(l, at, -1))}>
+                    上へ
+                  </button>
+                  <button type="button" onClick={() => restructure((l) => moveArticle(l, at, 1))}>
+                    下へ
+                  </button>
+                  <button
+                    type="button"
+                    className="danger"
+                    onClick={() => {
+                      if (confirm('この条を削除します。よろしいですか。')) {
+                        restructure((l) => removeArticle(l, at));
+                      }
+                    }}
+                  >
+                    削除
+                  </button>
+                </span>
+              )}
+              articleFooter={(at) => (
+                <ArticleFooter law={law} at={at} restructure={restructure} />
+              )}
+              chapterHeader={(chapter) => (
+                <div className="chapter-tools">
+                  <button type="button" onClick={() => restructure((l) => addArticle(l, chapter, 0))}>
+                    ＋ 章の先頭に条を追加
+                  </button>
+                  <button
+                    type="button"
+                    className="danger"
+                    onClick={() => {
+                      if (confirm('この章を、含まれる条ごと削除します。よろしいですか。')) {
+                        restructure((l) => removeChapter(l, chapter));
+                      }
+                    }}
+                  >
+                    章を削除
+                  </button>
+                </div>
+              )}
+              chapterFooter={(chapter) => (
+                <div className="chapter-tools">
+                  <button
+                    type="button"
+                    onClick={() => restructure((l) => addChapter(l, chapter + 1))}
+                  >
+                    ＋ 下に章を追加
+                  </button>
+                </div>
+              )}
+            />
           </div>
-        )}
-      </Form>
-
-      {review && (
-        <section id="review" className="review" aria-labelledby="review-heading">
-          <h2 id="review-heading">変更内容の確認</h2>
-
-          {review.changes.length === 0 ? (
-            <p>変更はありません。</p>
-          ) : (
-            <ol className="changes">
-              {review.changes.map((change, i) => (
-                <li key={i}>
-                  <span className="kind" data-kind={change.kind}>
-                    {change.kind}
-                  </span>
-                  <span className="label">{change.label}</span>
-                  {change.detail && <span className="detail">{change.detail}</span>}
-                </li>
-              ))}
-            </ol>
-          )}
-
-          {review.warnings.length > 0 && (
-            <div className="warnings">
-              <h3>確認してください</h3>
-              <ul>
-                {review.warnings.map((warning, i) => (
-                  <li key={i}>{warning}</li>
-                ))}
-              </ul>
-              <p>
-                条を増減させると、それ以降の条番号がずれます。本文中の「第◯条」という参照も
-                あわせて直す必要があります。
-              </p>
-            </div>
-          )}
-
-          <h3>提出する</h3>
-          <p>
-            この編集内容はまだどこにも保存されていません。次の手順で改正案として提出してください。
-          </p>
-          <ol className="steps">
-            <li>
-              下のボタンで JSON をコピーし、GitHub の編集画面を開きます。
-              <div className="actions">
-                <button type="button" className="primary" onClick={copyJson}>
-                  {copied ? 'コピーしました' : 'JSON をコピー'}
-                </button>
-                <a className="button" href={editUrl(slug)} target="_blank" rel="noreferrer">
-                  GitHub の編集画面を開く
-                </a>
-                <button type="button" onClick={downloadJson}>
-                  ファイルとして保存
-                </button>
-              </div>
-            </li>
-            <li>
-              編集画面のテキストを<strong>すべて選択して削除</strong>し、コピーした JSON を貼り付けます。
-            </li>
-            <li>
-              <strong>Commit changes</strong> を押し、
-              <strong>Create a new branch for this commit and start a pull request</strong>
-              を選んでプルリクエストを作成します。書き込み権限がない場合は自動でフォークが作られます。
-            </li>
-            <li>変更の理由を本文に書いて提出してください。会則の変更には理事会の決議が必要です。</li>
-          </ol>
-
-          <details>
-            <summary>JSON を表示</summary>
-            <pre>{json}</pre>
-          </details>
         </section>
+
+        <section className="pane pane-diff" aria-label="差分">
+          <div className="pane-inner">
+            <DiffPane
+              meta={meta}
+              articles={articles}
+              problems={problems}
+              onFocusArticle={focusArticle}
+            />
+          </div>
+        </section>
+      </div>
+
+      {submitting && (
+        <SubmitDialog
+          slug={slug}
+          law={law}
+          dataPath={dataPath}
+          errors={errors}
+          problems={problems}
+          changeCount={changeCount}
+          onClose={() => setSubmitting(false)}
+          onFocusArticle={(id) => {
+            setSubmitting(false);
+            focusArticle(id);
+          }}
+        />
       )}
+    </div>
+  );
+}
+
+function ArticleFooter({
+  law,
+  at,
+  restructure,
+}: {
+  law: Law;
+  at: Position;
+  restructure: (fn: (law: Law) => Law) => void;
+}) {
+  const article =
+    at.chapter === null ? law.articles?.[at.article] : law.chapters?.[at.chapter]?.articles[at.article];
+  const paragraphCount = article?.paragraphs?.length ?? 0;
+  const itemCount = article?.items?.length ?? 0;
+
+  return (
+    <div className="article-footer">
+      <button type="button" onClick={() => restructure((l) => addItem(l, at, null))}>
+        ＋ 号
+      </button>
+      {itemCount > 0 && (
+        <button type="button" onClick={() => restructure((l) => removeItem(l, at, null, itemCount - 1))}>
+          − 号
+        </button>
+      )}
+      <button type="button" onClick={() => restructure((l) => addParagraph(l, at))}>
+        ＋ 項
+      </button>
+      {paragraphCount > 0 && (
+        <>
+          <button
+            type="button"
+            onClick={() => restructure((l) => addItem(l, at, paragraphCount - 1))}
+          >
+            ＋ 末尾の項に号
+          </button>
+          <button
+            type="button"
+            onClick={() => restructure((l) => removeParagraph(l, at, paragraphCount - 1))}
+          >
+            − 項
+          </button>
+        </>
+      )}
+      <span className="grow" />
+      <button
+        type="button"
+        className="insert"
+        onClick={() => restructure((l) => addArticle(l, at.chapter, at.article + 1))}
+      >
+        ＋ ここに条を追加
+      </button>
     </div>
   );
 }

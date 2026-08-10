@@ -8,6 +8,10 @@ import Ajv2020 from 'ajv/dist/2020.js';
 const DATA_DIR = 'data';
 const SCHEMA_DIR = 'schema';
 
+// 改正案の段階では、附則の施行日はまだ決まっていない。通常は警告にとどめ、
+// main へ取り込むとき（--strict）だけエラーにする。決まらないまま公開されるのを防ぐ。
+const STRICT = process.argv.includes('--strict');
+
 const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'));
 
 const lawSchema = readJson(join(SCHEMA_DIR, 'law.schema.json'));
@@ -84,18 +88,30 @@ for (const file of files) {
     }
   }
 
-  // --- 附則の並び ---
+  // --- 附則 ---
   const provisions = law.supplementaryProvisions ?? [];
-  const dates = provisions.map((p) => p.effectiveDate);
+  const dates = provisions.map((p) => p.effectiveDate).filter(Boolean);
   if (dates.some((d, i) => i > 0 && d < dates[i - 1])) {
     warnings.push(`${path}: 附則が施行日順に並んでいません`);
+  }
+
+  for (const [i, provision] of provisions.entries()) {
+    if (provision.effectiveDate) continue;
+    const message =
+      `${path}: 附則 ${i + 1}件目（${provision.kind}）に施行日がありません。` +
+      '議決のあとに施行日を書き入れてください。';
+    (STRICT ? problems : warnings).push(message);
   }
   if (provisions.length > 0 && provisions[0].kind !== '制定') {
     warnings.push(`${path}: 附則の先頭が「制定」ではありません`);
   }
 
+  const pending = provisions.filter((p) => !p.effectiveDate).length;
   const label = law.chapters ? `${law.chapters.length}章 ${articles.length}条` : `${articles.length}条`;
-  console.log(`  ${path}  ${law.title}（${law.effect}） ${label} / 附則 ${provisions.length}件`);
+  console.log(
+    `  ${path}  ${law.title}（${law.effect}） ${label} / 附則 ${provisions.length}件` +
+      (pending > 0 ? `（うち施行日未定 ${pending}件）` : ''),
+  );
 }
 
 for (const w of warnings) console.warn(`警告  ${w}`);

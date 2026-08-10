@@ -58,9 +58,9 @@ export type Law = {
      */
     kind: "制定" | "一部改正" | "全部改正" | "廃止";
     /**
-     * 施行日 (YYYY-MM-DD)
+     * 施行日 (YYYY-MM-DD)。議決前の改正案では空にする。空は「まだ施行されていない」ことを表す。
      */
-    effectiveDate: string;
+    effectiveDate?: string;
     /**
      * 議決日 (YYYY-MM-DD)
      */

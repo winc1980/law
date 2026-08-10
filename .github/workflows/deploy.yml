@@ -29,6 +29,9 @@ jobs:
 
       - run: npm ci
 
+      # main では、施行日の決まっていない附則を残したまま公開しない
+      - run: npm run validate:strict
+
       # npm run build はスキーマ検証とテストを通してから astro build する
       - run: npm run build
 

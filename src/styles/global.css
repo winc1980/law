@@ -14,6 +14,9 @@
   --accent-bg: #e7ecf5;
   --draft: #a8382c;
   --draft-bg: #f3e6e4;
+  /* 差分の追加を示す色。強調色（藍）とは別に、意味を持つ色として置く。 */
+  --added: #2f6b52;
+  --added-bg: #e0ede6;
 
   --mincho: 'Hiragino Mincho ProN', 'Yu Mincho', YuMincho, 'Noto Serif JP', serif;
   --gothic: 'Hiragino Sans', 'Yu Gothic', YuGothic, 'Noto Sans JP', 'Segoe UI', system-ui, sans-serif;
@@ -35,6 +38,8 @@
     --accent-bg: #1b2434;
     --draft: #dd8a7e;
     --draft-bg: #2c1f1d;
+    --added: #7fc0a2;
+    --added-bg: #172621;
   }
 }
 

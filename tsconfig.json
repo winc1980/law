@@ -6,7 +6,8 @@
     "scripts/**/*"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    "src/generated/validate-law.mjs"
   ],
   "compilerOptions": {
     "resolveJsonModule": true,

@@ -108,7 +108,7 @@
           },
           "effectiveDate": {
             "type": "string",
-            "description": "施行日 (YYYY-MM-DD)",
+            "description": "施行日 (YYYY-MM-DD)。議決前の改正案では空にする。空は「まだ施行されていない」ことを表す。",
             "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
             "title": "施行日"
           },
@@ -144,8 +144,7 @@
           }
         },
         "required": [
-          "kind",
-          "effectiveDate"
+          "kind"
         ],
         "additionalProperties": false
       },

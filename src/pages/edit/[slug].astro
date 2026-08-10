@@ -1,31 +1,21 @@
 ---
-import Base from '../../layouts/Base.astro';
+import EditorLayout from '../../layouts/EditorLayout.astro';
 import LawEditor from '../../components/LawEditor';
 import { laws } from '../../lib/laws';
-import { buildEditSchema, toFormData, uiSchema } from '../../lib/editSchema';
 import { dataPath } from '../../lib/config';
 import { url } from '../../lib/url';
-import '../../styles/editor.css';
 
 export function getStaticPaths() {
   return laws.map((entry) => ({ params: { slug: entry.slug }, props: entry }));
 }
 
 const { slug, law } = Astro.props;
-const schema = buildEditSchema(law);
 ---
 
-<Base title={`${law.title}の改正案をつくる`} description={`${law.title}の改正案を作成し、提出するためのページ`}>
-  <header class="edit-header">
-    <p class="back"><a href={url(`laws/${slug}/`)}>← {law.title}に戻る</a></p>
-    <h1>改正案をつくる</h1>
-    <p class="lede">
-      現在の{law.title}を読み込んでいます。編集しても、この場ではどこにも保存されません。
-      内容を確認したうえで、改正案としてプルリクエストの形で提出します。
-      会則の変更には理事会の決議が必要です。
-    </p>
-  </header>
-
+<EditorLayout
+  title={`${law.title}の改正案をつくる`}
+  description={`${law.title}の改正案を作成し、提出するためのページ`}
+>
   <noscript>
     <p class="noscript">
       このページは JavaScript を使います。有効にするか、
@@ -35,48 +25,18 @@ const schema = buildEditSchema(law);
   </noscript>
 
   <LawEditor
-    client:load
+    client:only="react"
     slug={slug}
-    original={toFormData(law)}
-    schema={schema}
-    uiSchema={uiSchema}
+    original={law}
     dataPath={dataPath(slug)}
+    backHref={url(`laws/${slug}/`)}
   />
-</Base>
+</EditorLayout>
 
 <style>
-  .edit-header {
-    margin-bottom: 2.5rem;
-  }
-
-  .back {
-    margin: 0 0 1rem;
-    font-size: 0.85rem;
-  }
-
-  .back a {
-    color: var(--ink-muted);
-    text-decoration: none;
-  }
-
-  .back a:hover {
-    color: var(--accent);
-  }
-
-  h1 {
-    font-family: var(--mincho);
-    font-size: clamp(1.5rem, 4.5vw, 1.9rem);
-    font-weight: 600;
-    line-height: 1.5;
-    margin: 0 0 0.8rem;
-  }
-
-  .lede {
-    margin: 0;
-    color: var(--ink-muted);
-  }
-
   .noscript {
+    margin: 2rem auto;
+    max-width: 34rem;
     border: 1px solid var(--draft);
     background: var(--draft-bg);
     padding: 0.9rem 1.1rem;
