@@ -9,6 +9,7 @@ import type {
 } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import { useMemo, useState } from 'react';
+import { buttonTemplates } from './buttons';
 import { danglingReferences, summarize, type Change } from '../lib/diff';
 import { collectArticleIds, fillMissingIds, serializeLaw } from '../lib/serialize';
 import { editUrl } from '../lib/config';
@@ -178,6 +179,7 @@ export default function LawEditor({ slug, original, schema, uiSchema, dataPath }
         customValidate={customValidate}
         transformErrors={transformErrors}
         translateString={translateString}
+        templates={{ ButtonTemplates: buttonTemplates }}
         showErrorList={false}
         // ブラウザ標準の必須チェックに任せると、画面外の空欄があるときに submit が
         // 黙って止まり、何も起きていないように見える。スキーマ検証に一本化する。

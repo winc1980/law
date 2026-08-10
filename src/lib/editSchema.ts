@@ -19,6 +19,39 @@ function rewriteRefs(node: unknown): unknown {
   return out;
 }
 
+const SCHEMA_MAPS = new Set(['properties', '$defs', 'definitions']);
+const SUB_SCHEMAS = new Set(['items', 'not', 'additionalProperties']);
+const SCHEMA_LISTS = new Set(['oneOf', 'anyOf', 'allOf']);
+
+/**
+ * title と同じ description を落とす。RJSF はラベルの下に description を出すので、
+ * 「章 / 章」のように同じ言葉が二度並んでしまう。
+ */
+function dropEchoedDescriptions(schema: JsonObject): JsonObject {
+  const out: JsonObject = {};
+
+  for (const [key, value] of Object.entries(schema)) {
+    if (key === 'description' && value === schema.title) continue;
+
+    if (SCHEMA_MAPS.has(key)) {
+      out[key] = Object.fromEntries(
+        Object.entries(value as JsonObject).map(([name, sub]) => [
+          name,
+          dropEchoedDescriptions(sub as JsonObject),
+        ]),
+      );
+    } else if (SUB_SCHEMAS.has(key) && value !== null && typeof value === 'object') {
+      out[key] = dropEchoedDescriptions(value as JsonObject);
+    } else if (SCHEMA_LISTS.has(key) && Array.isArray(value)) {
+      out[key] = value.map((sub) => dropEchoedDescriptions(sub as JsonObject));
+    } else {
+      out[key] = value;
+    }
+  }
+
+  return out;
+}
+
 /**
  * 編集フォーム用のスキーマを schema/ から導出する。データ形式の定義は
  * schema/ 側にしかなく、ここでやるのはフォームに載せるための整形だけ。
@@ -47,7 +80,7 @@ export function buildEditSchema(law: Law): JsonObject {
   delete properties[law.chapters ? 'articles' : 'chapters'];
 
   schema.definitions = { article };
-  return schema;
+  return dropEchoedDescriptions(schema);
 }
 
 /**
@@ -72,9 +105,9 @@ const articleUi = {
     'ui:placeholder': '会員の義務',
   },
   content: {
+    // 第1項をここに書くことはスキーマの description が説明しているので、重ねて出さない。
     'ui:widget': 'textarea',
     'ui:options': { rows: 4 },
-    'ui:help': '項に分ける場合、第1項をここに書き、第2項以降は「項」に並べます。',
   },
   items: {
     items: { 'ui:widget': 'textarea', 'ui:options': { rows: 2 } },

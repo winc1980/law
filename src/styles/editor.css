@@ -87,21 +87,37 @@
   min-width: 0;
 }
 
-.editor .rjsf-array-item > .GridColumn:first-child {
+/* RJSF は項目本体と操作ボタンを横並びにする（インラインスタイルで flex が付く）。
+   本体側が縮まないように、伸びる側と縮まない側を指定しておく。 */
+.editor .rjsf-array-item > *:first-child {
+  flex: 1 1 auto;
   min-width: 0;
 }
 
-/* 配列項目のツールバー（上へ・下へ・削除） */
-.editor .rjsf-array-item .btn-group,
-.editor .rjsf-array-item-add {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.4rem;
+.editor .array-item-toolbox {
+  flex: none;
+  padding-left: 0.6rem;
 }
 
-.editor .rjsf-array-item + .rjsf-array-item-add {
-  margin-top: 0.8rem;
+.editor .array-item-toolbox .btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.editor .array-item-toolbox button {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.55rem;
+}
+
+.editor .rjsf-array-item-remove:not(:disabled):hover {
+  border-color: var(--draft);
+  background: var(--draft-bg);
+  color: var(--draft);
+}
+
+.editor .rjsf-array-item-add {
+  margin-top: 0.7rem;
 }
 
 /* --- ボタン --- */
