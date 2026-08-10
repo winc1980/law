@@ -24,6 +24,7 @@ await build({
       "export * from './src/lib/diff.ts';",
       "export * from './src/lib/edit.ts';",
       "export * from './src/lib/textdiff.ts';",
+      "export * from './src/lib/pr.ts';",
     ].join('\n'),
     resolveDir: process.cwd(),
     loader: 'ts',
@@ -47,6 +48,11 @@ const {
   removeItem,
   diffText,
   sideOf,
+  comparisonTable,
+  proposalBody,
+  proposalBranch,
+  proposalTitle,
+  commitMessage,
 } = await import(pathToFileURL(bundle).href);
 
 const DATA_PATH = 'data/constitution.json';
@@ -239,6 +245,131 @@ test('号をすべて消すと、キーごと落ちる', () => {
   const written = JSON.parse(serializeLaw(edited, DATA_PATH));
   assert.ok(!('items' in written.chapters[1].articles[1]));
   assert.ok('items' in written.chapters[2].articles[0]);
+});
+
+// --- 新旧対照表とプルリクエスト ---
+
+test('新旧対照表は、改正案を左・現行を右に置く', () => {
+  const edited = structuredClone(law);
+  edited.chapters[0].articles[0].content = '本会は、コンピュータ研究会・WINCと号する。';
+
+  const rows = comparisonTable(law, edited).split('\n');
+  assert.equal(rows[0], '| 改正案 | 現行 |');
+  assert.equal(rows.length, 3, '変わった条だけが行になる');
+
+  const [proposed, current] = rows[2].split(' | ');
+  assert.ok(proposed.includes('**第1条**（名称）'), proposed);
+  assert.ok(proposed.includes('**号する**'), proposed);
+  assert.ok(current.includes('~~称する~~'), current);
+});
+
+test('対照表には、変わっていない項も条の全文として載る', () => {
+  // 差分ペインと違い、対照表は条として読めなければ議決の資料にならない
+  const edited = structuredClone(law);
+  edited.chapters[0].articles[0].content = '本会は、コンピュータ研究会・WINCと号する。';
+
+  const row = comparisonTable(law, edited).split('\n')[2];
+  assert.ok(row.includes('２　本会の事務局は、幹事長が指定する、早稲田大学の施設におく。'), row);
+});
+
+test('片側にしかない号は、条文としての位置に差し込む', () => {
+  // 単純に連結すると、足した号が項より後ろ——条の末尾——に出てしまう
+  const edited = structuredClone(law);
+  edited.chapters[0].articles[0].items = ['新しく足した号。'];
+
+  const proposed = comparisonTable(law, edited).split('\n')[2].split(' | ')[0];
+  assert.ok(
+    proposed.indexOf('新しく足した号。') < proposed.indexOf('２　本会の事務局は'),
+    proposed,
+  );
+});
+
+test('条を足すと現行の側が新設、消すと改正案の側が削除になる', () => {
+  const added = comparisonTable(law, addArticle(law, 0, 1)).split('\n');
+  assert.equal(added.length, 3, '繰り下がっただけの条は対照表に出さない');
+  assert.ok(added[2].endsWith('（新設） |'), added[2]);
+
+  const shorter = structuredClone(law);
+  shorter.chapters[0].articles.splice(0, 1);
+  const removed = comparisonTable(law, shorter).split('\n');
+  assert.ok(removed[2].startsWith('| （削除） |'), removed[2]);
+});
+
+test('升目を壊す記号は逃がす', () => {
+  const edited = structuredClone(law);
+  edited.chapters[0].articles[0].content = '表 | 罫 * 星 _ 下線';
+
+  const row = comparisonTable(law, edited).split('\n')[2];
+  assert.equal(row.split(' | ').length, 2, '升目の区切りが増えていない');
+  assert.ok(row.includes('\\|') && row.includes('\\*') && row.includes('\\_'), row);
+});
+
+test('プルリクエスト本文に理由・概要・新旧対照表が入る', () => {
+  const edited = structuredClone(law);
+  edited.chapters[1].articles[0].content = '書き換えた本文。';
+  edited.supplementaryProvisions = [
+    ...law.supplementaryProvisions,
+    { kind: '一部改正', reason: '目的の書き方を改める。' },
+  ];
+
+  const body = proposalBody({
+    before: law,
+    after: edited,
+    reason: '目的の書き方を改める。',
+    editorUrl: 'https://winc1980.github.io/law/edit/constitution/',
+  });
+
+  assert.ok(body.includes('## 改正の理由'));
+  assert.ok(body.includes('> 目的の書き方を改める。'));
+  assert.ok(body.includes('## 変更の概要'));
+  assert.ok(body.includes('| 改正案 | 現行 |'));
+  assert.ok(body.includes('**第2条**（目的）') && body.includes('書き換えた'), body);
+  // 議決日と施行日が空のまま取り込まれないよう、本文で釘を刺しておく
+  assert.ok(body.includes('validate:strict'));
+  assert.ok(body.includes('https://winc1980.github.io/law/edit/constitution/'));
+});
+
+test('参照がずれるときは、プルリクエスト本文にも警告を出す', () => {
+  const body = proposalBody({
+    before: law,
+    after: addArticle(law, 0, 0),
+    reason: '条を1つ足す。',
+    editorUrl: '#',
+  });
+
+  assert.ok(body.includes('> [!WARNING]'), body);
+  assert.ok(body.includes('会員の義務'));
+});
+
+test('変更がなければ対照表は出さない', () => {
+  const body = proposalBody({ before: law, after: law, reason: 'なし', editorUrl: '#' });
+  assert.ok(body.includes('（変更はありません）'));
+  assert.ok(!body.includes('## 新旧対照表'));
+});
+
+test('プルリクエストのタイトルは理由の1行目から作る', () => {
+  assert.equal(
+    proposalTitle(law, '会費を改める。\n2行目は使わない。'),
+    `${law.title}の改正：会費を改める。`,
+  );
+
+  const title = proposalTitle(law, 'あ'.repeat(60));
+  assert.ok(title.endsWith('…'));
+  assert.ok(title.length < law.title.length + 45, title);
+});
+
+test('コミットメッセージは1行目にタイトル、空行のあとに理由', () => {
+  const [subject, blank, ...rest] = commitMessage(law, '会費を改める。\n理由の続き。').split('\n');
+
+  assert.equal(subject, `${law.title}の改正：会費を改める。`);
+  assert.equal(blank, '');
+  assert.equal(rest.join('\n'), '会費を改める。\n理由の続き。\n');
+});
+
+test('ブランチ名には英数字しか通さない', () => {
+  assert.equal(proposalBranch('constitution', 'a1b2c3d4e5f6'), 'proposal/constitution-a1b2c3d4e5f6');
+  assert.equal(proposalBranch('constitution', '../../main'), 'proposal/constitution-main');
+  assert.equal(proposalBranch('constitution', '日本語'), 'proposal/constitution-x');
 });
 
 // --- スキーマとエディタのずれ ---

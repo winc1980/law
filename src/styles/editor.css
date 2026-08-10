@@ -112,13 +112,15 @@ body.editor-page {
   cursor: not-allowed;
 }
 
-.editor button.primary {
+.editor button.primary,
+.editor .button.primary {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--ground);
 }
 
-.editor button.primary:hover:not(:disabled) {
+.editor button.primary:hover:not(:disabled),
+.editor .button.primary:hover {
   opacity: 0.85;
   color: var(--ground);
 }
@@ -603,6 +605,75 @@ body.editor-page {
   display: grid;
   grid-template-columns: minmax(8rem, auto) 1fr;
   gap: 0 0.8rem;
+}
+
+/* ---------- 提出（GitHub 認証） ---------- */
+
+.editor .signin {
+  border: 1px solid var(--rule-strong);
+  background: var(--panel);
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.editor .signin p {
+  font-size: 0.9rem;
+}
+
+.editor .signin .actions {
+  margin: 0;
+}
+
+.editor .signin .who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.editor .signin input[type='password'] {
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--rule-strong);
+  background: var(--ground);
+  color: var(--ink);
+  border-radius: 0;
+}
+
+.editor .signin input[type='password']:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+/* 利用者が GitHub の画面へ書き写す文字列。読み違えないよう大きく出す。 */
+.editor .usercode {
+  font-family: var(--mono);
+  font-size: 1.6rem;
+  letter-spacing: 0.22em;
+  text-align: center;
+  padding: 0.6rem;
+  border: 1px solid var(--accent);
+  background: var(--ground);
+  user-select: all;
+}
+
+.editor .failure {
+  border: 1px solid var(--draft);
+  background: var(--draft-bg);
+  color: var(--draft);
+  padding: 0.6rem 0.9rem;
+  font-size: 0.88rem;
+}
+
+.editor .manual {
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
 }
 
 .editor details {

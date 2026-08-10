@@ -1,4 +1,4 @@
-import { toKanjiNumeral } from './numbering';
+import { toFullWidthNumeral, toKanjiNumeral } from './numbering';
 import type { Article, Law } from '../types/law';
 
 export interface Change {
@@ -134,6 +134,8 @@ export function summarize(before: Law, after: Law): Change[] {
 
 export interface DiffLine {
   label: string;
+  /** 対照表で行頭に置く番号。見出しと本文にはない（条番号が見出し行に出るため）。 */
+  prefix?: string;
   before?: string;
   after?: string;
 }
@@ -153,32 +155,70 @@ function unfold(article: Article): DiffLine[] {
   lines.push({ label: '本文', before: article.content });
 
   for (const [i, item] of (article.items ?? []).entries()) {
-    lines.push({ label: `第${toKanjiNumeral(i + 1)}号`, before: item });
+    lines.push({ label: `第${toKanjiNumeral(i + 1)}号`, prefix: toKanjiNumeral(i + 1), before: item });
   }
   for (const [i, paragraph] of (article.paragraphs ?? []).entries()) {
-    lines.push({ label: `第${i + 2}項`, before: paragraph.content });
+    lines.push({ label: `第${i + 2}項`, prefix: toFullWidthNumeral(i + 2), before: paragraph.content });
     for (const [j, item] of (paragraph.items ?? []).entries()) {
-      lines.push({ label: `第${i + 2}項 第${toKanjiNumeral(j + 1)}号`, before: item });
+      lines.push({
+        label: `第${i + 2}項 第${toKanjiNumeral(j + 1)}号`,
+        // 全角空白で一段下げる。対照表の升目の中でも項の下に見える。
+        prefix: `　${toKanjiNumeral(j + 1)}`,
+        before: item,
+      });
     }
   }
   return lines;
 }
 
-function pairLines(before: Article, after: Article): DiffLine[] {
-  const from = new Map(unfold(before).map((line) => [line.label, line.before!]));
-  const to = new Map(unfold(after).map((line) => [line.label, line.before!]));
-  const labels = [...new Set([...from.keys(), ...to.keys()])];
+/**
+ * 両側の行を1本の並びにまとめる。改正案の並びを土台にし、消えた行は
+ * 元の位置（直前にある共通の行の後ろ）へ差し込む。単に連結すると、
+ * 足した号が条の末尾に出るなど、条文として読めない順になる。
+ */
+function mergeLabels(from: string[], to: string[]): string[] {
+  const out = [...to];
+  const known = new Set(to);
 
-  return labels
-    .map((label) => ({ label, before: from.get(label), after: to.get(label) }))
-    .filter((line) => line.before !== line.after);
+  for (const [i, label] of from.entries()) {
+    if (known.has(label)) continue;
+
+    let at = 0;
+    for (let j = i - 1; j >= 0; j--) {
+      const index = out.indexOf(from[j]!);
+      if (index >= 0) {
+        at = index + 1;
+        break;
+      }
+    }
+    out.splice(at, 0, label);
+    known.add(label);
+  }
+  return out;
+}
+
+function pairLines(before: Article, after: Article, keepAll = false): DiffLine[] {
+  const from = new Map(unfold(before).map((line) => [line.label, line]));
+  const to = new Map(unfold(after).map((line) => [line.label, line]));
+  const labels = mergeLabels([...from.keys()], [...to.keys()]);
+
+  const lines = labels.map((label) => {
+    const old = from.get(label);
+    const now = to.get(label);
+    return { label, prefix: (now ?? old)!.prefix, before: old?.before, after: now?.before };
+  });
+
+  return keepAll ? lines : lines.filter((line) => line.before !== line.after);
 }
 
 /**
  * 条ごとの差分。条の対応づけは id で行うので、条番号がずれても
  * 「別の条が追加・削除された」ようには見えない。
+ *
+ * keepAll を立てると、変わった条について全行を返す。新旧対照表は
+ * 変わった行だけでは条として読めないため、そちらで使う。
  */
-export function articleDiffs(before: Law, after: Law): ArticleDiff[] {
+function collect(before: Law, after: Law, keepAll: boolean): ArticleDiff[] {
   const from = new Map(place(before).map((p) => [p.article.id, p]));
   const to = new Map(place(after).map((p) => [p.article.id, p]));
   const out: ArticleDiff[] = [];
@@ -191,13 +231,16 @@ export function articleDiffs(before: Law, after: Law): ArticleDiff[] {
         kind: '追加',
         caption: now.article.caption,
         numberAfter: now.number,
-        lines: unfold(now.article).map(({ label, before: text }) => ({ label, after: text })),
+        lines: unfold(now.article).map(({ label, prefix, before: text }) => ({
+          label,
+          prefix,
+          after: text,
+        })),
       });
       continue;
     }
 
-    const lines = pairLines(old.article, now.article);
-    if (lines.length === 0) continue;
+    if (pairLines(old.article, now.article).length === 0) continue;
 
     out.push({
       id,
@@ -205,7 +248,7 @@ export function articleDiffs(before: Law, after: Law): ArticleDiff[] {
       caption: now.article.caption || old.article.caption,
       numberBefore: old.number,
       numberAfter: now.number,
-      lines,
+      lines: pairLines(old.article, now.article, keepAll),
     });
   }
 
@@ -221,6 +264,16 @@ export function articleDiffs(before: Law, after: Law): ArticleDiff[] {
   }
 
   return out.sort((a, b) => (a.numberAfter ?? a.numberBefore ?? 0) - (b.numberAfter ?? b.numberBefore ?? 0));
+}
+
+/** 差分ペイン用。変わった行だけを返す。 */
+export function articleDiffs(before: Law, after: Law): ArticleDiff[] {
+  return collect(before, after, false);
+}
+
+/** 新旧対照表用。変わった条について、両側そろえた全行を返す。 */
+export function articleComparisons(before: Law, after: Law): ArticleDiff[] {
+  return collect(before, after, true);
 }
 
 export interface ReferenceProblem {

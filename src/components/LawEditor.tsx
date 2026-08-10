@@ -263,6 +263,7 @@ export default function LawEditor({ slug, original, dataPath, backHref }: Props)
       {submitting && (
         <SubmitDialog
           slug={slug}
+          original={original}
           law={law}
           dataPath={dataPath}
           errors={errors}
