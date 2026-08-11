@@ -1,0 +1,44 @@
+---
+import EditorLayout from '../../layouts/EditorLayout.astro';
+import LawEditor from '../../components/LawEditor';
+import { laws } from '../../lib/laws';
+import { dataPath } from '../../lib/config';
+import { url } from '../../lib/url';
+
+export function getStaticPaths() {
+  return laws.map((entry) => ({ params: { slug: entry.slug }, props: entry }));
+}
+
+const { slug, law } = Astro.props;
+---
+
+<EditorLayout
+  title={`${law.title}の改正案をつくる`}
+  description={`${law.title}の改正案を作成し、提出するためのページ`}
+>
+  <noscript>
+    <p class="noscript">
+      このページは JavaScript を使います。有効にするか、
+      <a href={`https://github.com/winc1980/law/blob/main/${dataPath(slug)}`}>{dataPath(slug)}</a>
+      を直接編集してください。
+    </p>
+  </noscript>
+
+  <LawEditor
+    client:only="react"
+    slug={slug}
+    original={law}
+    dataPath={dataPath(slug)}
+    backHref={url(`laws/${slug}/`)}
+  />
+</EditorLayout>
+
+<style>
+  .noscript {
+    margin: 2rem auto;
+    max-width: 34rem;
+    border: 1px solid var(--draft);
+    background: var(--draft-bg);
+    padding: 0.9rem 1.1rem;
+  }
+</style>

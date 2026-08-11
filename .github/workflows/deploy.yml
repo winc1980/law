@@ -1,0 +1,56 @@
+name: GitHub Pages へ公開
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 公開中に別の公開が走らないようにする。実行中のものは中断しない。
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: ビルド
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # main では、施行日の決まっていない附則を残したまま公開しない
+      - run: npm run validate:strict
+
+      # npm run build はスキーマ検証とテストを通してから astro build する。
+      # GitHub 認証の中継（auth/）を立てていれば、その設定をここで埋め込む。
+      # 未設定なら、編集ページは個人アクセストークンを貼る経路になる。
+      - run: npm run build
+        env:
+          PUBLIC_GH_CLIENT_ID: ${{ vars.GH_OAUTH_CLIENT_ID }}
+          PUBLIC_GH_AUTH_ENDPOINT: ${{ vars.GH_AUTH_ENDPOINT }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: 公開
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
