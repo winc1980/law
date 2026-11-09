@@ -183,7 +183,7 @@
 .node-tools button, .node-tools select { font-size: 11px; padding: 1px 5px; }
 .node-tools .inline-field { width: 7em; font-size: 12px; }
 .node-tools label { display: inline-flex; align-items: center; gap: 4px; }
-.law-article:focus-within > .node-tools, .paragraph-block:focus-within > .node-tools, .law-items li:focus-within > div > .node-tools, .law-chapter:focus-within > .node-tools { display: flex; }
+.law-article[data-active="true"] > .node-tools, .paragraph-block[data-active="true"] > .node-tools, .law-items li[data-active="true"] > div > .node-tools, .law-chapter[data-active="true"] > .node-tools { display: flex; }
 .add-line { font-size: 11px; padding: 1px 8px; margin: 3px 0; }
 .structure-tools { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 16px; }
 .structure-tools button { padding: 3px 8px; font-size: 12px; }

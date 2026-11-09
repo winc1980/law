@@ -110,6 +110,8 @@ bun run build          # 閲覧専用の静的サイトをdist/へ生成
 bun run verify         # CIと同じ検証・型チェック・テスト・ビルド
 bunx --bun playwright install chromium
 bun run test:browser   # 一時原本で実行。実データは変更しない
+bunx --bun playwright install webkit
+bun run test:browser:webkit # Safari系エンジンで同じ操作を検証
 ```
 
 ブラウザテストでインストール済みのChromiumを使う場合は`LAW_CHROMIUM_PATH`に実行ファイルを指定できます。

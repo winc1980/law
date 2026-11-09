@@ -23,6 +23,20 @@ function Field({ label, value, onChange, compact = false }: { label: string; val
   return compact ? <input className="inline-field" aria-label={label} value={value} onChange={e => onChange(e.target.value)} /> : <textarea ref={ref} className="text-field" aria-label={label} value={value} rows={1} onChange={e => onChange(e.target.value)} />;
 }
 export function DocumentBody({ document: doc, mutate, display }: { document: Document; mutate?: Mutate; display?: DisplayOptions }) {
+  const [activeNodes, setActiveNodes] = useState<string[]>([]);
+  const pointerInProgress = useRef(false);
+  // Safariではボタンのmousedownで入力欄のフォーカスが外れる。
+  // blurで操作欄を消さず、選択したノードとその親の操作欄を維持する。
+  const selectNodes = (target: EventTarget | null) => {
+    const selected: string[] = [];
+    let element = target instanceof Element ? target : null;
+    while (element) {
+      const uuid = element.getAttribute("data-editor-node");
+      if (uuid) selected.push(uuid);
+      element = element.parentElement;
+    }
+    if (selected.length) setActiveNodes(previous => previous.length === selected.length && previous.every((uuid, i) => uuid === selected[i]) ? previous : selected);
+  };
   const set = (id: string | undefined, key: string, value: string) => mutate?.(d => Reflect.set(find(d, id), key, value));
   const moveArticle = (uuid: string | undefined, delta: number) => mutate?.(d => {
     const list = articleLists(d).find(list => list.some(a => a.uuid === uuid));
@@ -30,7 +44,7 @@ export function DocumentBody({ document: doc, mutate, display }: { document: Doc
     const i = list.findIndex(a => a.uuid === uuid), j = i + delta;
     if (j >= 0 && j < list.length) [list[i], list[j]] = [list[j], list[i]];
   });
-  const renderArticle = (a: Article) => <article className="law-article" id={articleAnchor(a)} key={a.uuid} hidden={display?.hidden?.has(a.uuid!)}>
+  const renderArticle = (a: Article) => <article className="law-article" id={articleAnchor(a)} key={a.uuid} hidden={display?.hidden?.has(a.uuid!)} data-editor-node={mutate ? a.uuid : undefined} data-active={mutate ? activeNodes.includes(a.uuid!) : undefined}>
     {(a.caption || mutate) && <div className="article-caption">（{mutate ? <Field compact label={`${a.name}の見出し`} value={a.caption ?? ""} onChange={v => set(a.uuid, "caption", v)} /> : a.caption}）</div>}
     {mutate && <div className="node-tools article-tools">
       <label>条名 <Field compact label={`${a.name}の名称`} value={a.name} onChange={v => set(a.uuid, "name", v)} /></label>
@@ -42,7 +56,7 @@ export function DocumentBody({ document: doc, mutate, display }: { document: Doc
         mutate(d => { if (typeof d.body === "string") return; const source = articleLists(d).find(l => l.some(x => x.uuid === a.uuid))!; const article = source.splice(source.findIndex(x => x.uuid === a.uuid), 1)[0]; d.body.chapters!.find(c => c.uuid === target)!.articles.push(article); });
       }}><option value="">章へ移動…</option>{doc.body.chapters.map(c => <option key={c.uuid} value={c.uuid}>{c.name} {c.title}</option>)}</select>}
     </div>}
-    {a.paragraphs.map((p, i) => <div className="paragraph-block" key={p.uuid}>
+    {a.paragraphs.map((p, i) => <div className="paragraph-block" key={p.uuid} data-editor-node={mutate ? p.uuid : undefined} data-active={mutate ? activeNodes.includes(p.uuid!) : undefined}>
       <div className="law-paragraph"><span className="paragraph-marker" data-paragraph-number={i === 0 ? undefined : i + 1}>{i === 0 ? a.name : String(i + 1).replace(/\d/g, c => String.fromCharCode(c.charCodeAt(0) + 0xfee0))}</span><div className="paragraph-text">{mutate ? <Field label={`${a.name} 第${i + 1}項の本文`} value={p.text} onChange={v => set(p.uuid, "text", v)} /> : <><Text value={p.text} search={display?.search} /><a className="permalink" href={`#${articleAnchor(a)}`} aria-label={`${a.name}の固定リンク`}>§</a></>}</div></div>
       {mutate && <div className="node-tools paragraph-tools">
         <span>第{i + 1}項</span>
@@ -52,7 +66,7 @@ export function DocumentBody({ document: doc, mutate, display }: { document: Doc
         <button onClick={() => mutate(d => { const paragraph = find<Article>(d, a.uuid).paragraphs[i]; (paragraph.items ??= []).push({ uuid: crypto.randomUUID(), text: "" }); })}>号を追加</button>
         <button className="danger" disabled={a.paragraphs.length === 1} onClick={() => mutate(d => find<Article>(d, a.uuid).paragraphs.splice(i, 1))}>項を削除</button>
       </div>}
-      {!!p.items?.length && <ol className="law-items">{p.items.map((item, j) => <li key={item.uuid}><span className="item-marker">{kanji(j + 1)}</span><div>{mutate ? <><Field label={`${a.name} 第${i + 1}項 第${j + 1}号`} value={item.text} onChange={v => set(item.uuid, "text", v)} /><div className="node-tools">
+      {!!p.items?.length && <ol className="law-items">{p.items.map((item, j) => <li key={item.uuid} data-editor-node={mutate ? item.uuid : undefined} data-active={mutate ? activeNodes.includes(item.uuid!) : undefined}><span className="item-marker">{kanji(j + 1)}</span><div>{mutate ? <><Field label={`${a.name} 第${i + 1}項 第${j + 1}号`} value={item.text} onChange={v => set(item.uuid, "text", v)} /><div className="node-tools">
         <button disabled={j === 0} onClick={() => mutate(d => { const list = find<Article>(d, a.uuid).paragraphs[i].items!; [list[j - 1], list[j]] = [list[j], list[j - 1]]; })}>↑</button>
         <button disabled={j === p.items!.length - 1} onClick={() => mutate(d => { const list = find<Article>(d, a.uuid).paragraphs[i].items!; [list[j + 1], list[j]] = [list[j], list[j + 1]]; })}>↓</button>
         <button className="danger" onClick={() => mutate(d => find<Article>(d, a.uuid).paragraphs[i].items!.splice(j, 1))}>号を削除</button>
@@ -61,11 +75,21 @@ export function DocumentBody({ document: doc, mutate, display }: { document: Doc
     {mutate && <button className="add-line" onClick={() => mutate(d => find<Article>(d, a.uuid).paragraphs.push(newParagraph()))}>＋ 項を追加</button>}
   </article>;
   if (typeof doc.body === "string") return <div className="plain-body" hidden={display?.hidden?.has("body")}>{mutate ? <Field label="本文" value={doc.body} onChange={v => mutate(d => { d.body = v; })} /> : <Text value={doc.body} search={display?.search} />}</div>;
-  return <div className={mutate ? "law-body is-editing" : "law-body"}>
+  return <div className={mutate ? "law-body is-editing" : "law-body"}
+    onPointerDownCapture={mutate ? () => { pointerInProgress.current = true; } : undefined}
+    onPointerCancelCapture={mutate ? () => { pointerInProgress.current = false; } : undefined}
+    onKeyDownCapture={mutate ? () => { pointerInProgress.current = false; } : undefined}
+    onFocusCapture={mutate ? event => { if (!pointerInProgress.current) selectNodes(event.target); } : undefined}
+    onClickCapture={mutate ? event => {
+      // タッチ中に操作欄を挿入すると、同じ座標の別ボタンへclickが届く。
+      // 押した要素へのclickが確定してから表示する。
+      pointerInProgress.current = false;
+      selectNodes(event.target);
+    } : undefined}>
     {(doc.body.preamble || mutate) && <section className="preamble" id="preamble" hidden={display?.hidden?.has("preamble")}>{mutate ? <details open={!!doc.body.preamble}><summary>前文</summary><Field label="前文" value={doc.body.preamble ?? ""} onChange={v => mutate(d => { if (typeof d.body !== "string") d.body.preamble = v; })} /></details> : <Text value={doc.body.preamble ?? ""} search={display?.search} />}</section>}
     <div id="main-provisions" hidden={display?.hidden?.has("body")}>
     {doc.body.articles?.map(renderArticle)}
-    {doc.body.chapters?.map((c, i) => <section key={c.uuid} id={chapterAnchor(c)} className="law-chapter" hidden={display?.hidden?.has(c.uuid!)}>
+    {doc.body.chapters?.map((c, i) => <section key={c.uuid} id={chapterAnchor(c)} className="law-chapter" hidden={display?.hidden?.has(c.uuid!)} data-editor-node={mutate ? c.uuid : undefined} data-active={mutate ? activeNodes.includes(c.uuid!) : undefined}>
       <h2>{mutate ? <><Field compact label={`${c.name}の名称`} value={c.name} onChange={v => set(c.uuid, "name", v)} /> <Field compact label={`${c.name}の題名`} value={c.title} onChange={v => set(c.uuid, "title", v)} /></> : `${c.name}　${c.title}`}</h2>
       {mutate && <div className="node-tools">
         <button disabled={i === 0} onClick={() => mutate(d => { if (typeof d.body === "string") return; const l = d.body.chapters!; [l[i - 1], l[i]] = [l[i], l[i - 1]]; })}>章を上へ</button>
@@ -92,7 +116,7 @@ export function DocumentBody({ document: doc, mutate, display }: { document: Doc
       })}>＋ 章を追加</button>
       <button className="secondary" onClick={() => mutate(d => { if (typeof d.body !== "string") (d.body.supplementaryProvisions ??= []).push({ uuid: crypto.randomUUID(), title: "附則", articles: [newArticle("第一条")] }); })}>＋ 附則を追加</button>
     </div>}
-    {doc.body.supplementaryProvisions?.map((p, i) => <section key={p.uuid} id={`supp-${p.uuid}`} className="law-chapter supplementary" hidden={display?.hidden?.has(p.uuid!)}><h2>{mutate ? <Field compact label={`附則${i + 1}の題名`} value={p.title} onChange={v => set(p.uuid, "title", v)} /> : p.title}</h2>
+    {doc.body.supplementaryProvisions?.map((p, i) => <section key={p.uuid} id={`supp-${p.uuid}`} className="law-chapter supplementary" hidden={display?.hidden?.has(p.uuid!)} data-editor-node={mutate ? p.uuid : undefined} data-active={mutate ? activeNodes.includes(p.uuid!) : undefined}><h2>{mutate ? <Field compact label={`附則${i + 1}の題名`} value={p.title} onChange={v => set(p.uuid, "title", v)} /> : p.title}</h2>
       {mutate && <div className="node-tools"><button onClick={() => mutate(d => { if (typeof d.body !== "string") d.body.supplementaryProvisions![i].articles.push(newArticle()); })}>条を追加</button><button className="danger" onClick={() => mutate(d => { if (typeof d.body !== "string") d.body.supplementaryProvisions!.splice(i, 1); })}>附則を削除</button></div>}
       {p.articles.map(renderArticle)}
     </section>)}

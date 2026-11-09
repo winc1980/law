@@ -13,6 +13,7 @@
     "test": "bun test ./tests/unit",
     "commit": "git -c core.hooksPath=.githooks commit",
     "test:browser": "bunx --bun playwright test",
+    "test:browser:webkit": "LAW_TEST_BROWSER=webkit bunx --bun playwright test",
     "build": "bun scripts/build.tsx",
     "verify": "bun run validate && bun run check && bun run test && bun run build",
     "prepare:commit": "bun scripts/prepare-commit.ts",
