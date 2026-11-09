@@ -99,6 +99,8 @@ docs/                  設計
 .githooks/             コミット前のUUID補完と検証
 ```
 
+画面固有の配置はTSXのTailwindユーティリティで指定します。`src/web/styles/app.css`の`@theme`に共通の色・フォント・画面幅、`@utility`に共通レイアウト、`@layer components`にボタン・目次・条文・比較表の共通スタイルを定義しています。モバイル表示と印刷には`max-md:`や`print:`を使います。
+
 ## 検証と公開
 
 ```sh

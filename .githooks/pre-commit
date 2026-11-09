@@ -2,3 +2,4 @@
 set -eu
 cd "$(git rev-parse --show-toplevel)"
 exec bun scripts/prepare-commit.ts
+exec bun run format

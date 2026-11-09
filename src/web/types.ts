@@ -1,4 +1,5 @@
 import type { Document } from "../domain/model";
+
 export type Revision = { sha: string; date: string; subject: string };
 export type Bootstrap = {
   mode: "local" | "public";
@@ -9,4 +10,8 @@ export type Bootstrap = {
   csrf?: string;
   histories?: Record<string, Revision[]>;
 };
-declare global { interface Window { __LAW_DATA__: Bootstrap } }
+declare global {
+  interface Window {
+    __LAW_DATA__: Bootstrap;
+  }
+}
