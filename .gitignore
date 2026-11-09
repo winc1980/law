@@ -1,6 +1,8 @@
 # build output
 dist/
-.astro/
+test-results/
+playwright-report/
+.test-data/
 
 # dependencies
 node_modules/

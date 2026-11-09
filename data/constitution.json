@@ -1,300 +1,597 @@
 {
-  "$schema": "../schema/law.schema.json",
+  "$schema": "../schema/document.schema.json",
+  "schemaVersion": 1,
+  "id": "constitution",
+  "uuid": "76432ebc-69da-836b-ab93-a26f547f2ccb",
   "title": "コンピュータ研究会・WINC会則",
-  "lawType": "会則",
-  "effect": "施行中",
-  "chapters": [
-    {
-      "id": "name",
-      "title": "名称",
-      "articles": [
-        {
-          "id": "name",
-          "caption": "名称",
-          "content": "本会は、コンピュータ研究会・WINCと称する。",
-          "paragraphs": [
-            {
-              "content": "本会の事務局は、幹事長が指定する、早稲田大学の施設におく。"
-            },
-            {
-              "content": "事務局は、会計並びに会の運営に関する事務を行う。"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "purpose-and-activities",
-      "title": "目的と事業",
-      "articles": [
-        {
-          "id": "purpose",
-          "caption": "目的",
-          "content": "本会は、会員が、情報サービスを安全かつ有効に活用または提供するための知識、技術および資質の向上を図ることを目的とする。"
-        },
-        {
-          "id": "activities",
-          "caption": "事業",
-          "content": "本会は、前条の目的を達成するため、次の事業を行う。",
-          "items": [
-            "研究会、講習会、見学会などの開催",
-            "会報、研究資料その他の発行",
-            "研究の遂行を目的とする施設および設備の提供",
-            "その他本会の目的達成に必要な事項"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "composition",
-      "title": "構成",
-      "articles": [
-        {
-          "id": "members",
-          "caption": "会員",
-          "content": "本会の会員は次のとおりとする。",
-          "items": [
-            "正会員\n本会の趣旨に賛同し、所定の手続きを経て入会し、通常会費を納める早稲田大学の正規学生",
-            "学外会員\n本会の趣旨に賛同し、所定の手続きを経て入会し、通常会費を納める早稲田大学以外の大学の正規学生"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "rights-and-duties",
-      "title": "会員の権利と義務",
-      "articles": [
-        {
-          "id": "member-rights",
-          "caption": "会員の権利",
-          "content": "本会の会員は次の権利を有する。",
-          "items": [
-            "本会の事業に関する情報を受けること",
-            "本会の事業において活動を行うこと",
-            "総会に参加すること"
-          ]
-        },
-        {
-          "id": "member-duties",
-          "caption": "会員の義務",
-          "content": "本会の会員は次の義務を負う。",
-          "items": [
-            "本会へ会費を納入すること",
-            "本会の運営に協力すること",
-            "本会の行動規範を尊重すること",
-            "所属および連絡先情報を本会へ提供すること"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "admission-and-withdrawal",
-      "title": "会員の入会と退会",
-      "articles": [
-        {
-          "id": "admission",
-          "caption": "入会",
-          "content": "本会への入会手続きを行ったものを、理事会の決議をもって会員とする。"
-        },
-        {
-          "id": "loss-of-membership",
-          "caption": "会員資格の喪失",
-          "content": "本会の会員は、次のいずれかに該当するときは、その資格を喪失する。",
-          "items": [
-            "第6条の義務に違反する行為があったとき",
-            "本会の活動を著しく妨げるような行為があったとき",
-            "1か月以上本会からの連絡が不能であるとき"
-          ]
-        },
-        {
-          "id": "withdrawal",
-          "caption": "退会",
-          "content": "退会を希望する会員は、本会の事務局にて退会手続きを行わなければならない。ただし、第8条に該当するときには、理事会において退会を審議・確認するものとする。"
-        },
-        {
-          "id": "officers",
-          "caption": "役員",
-          "content": "本会に次の役員をおく。その任期は1年とし、再任はさまたげない。",
-          "items": [
-            "幹事長 1名",
-            "副幹事長 1名",
-            "会計 1名"
-          ]
-        },
-        {
-          "id": "officer-election",
-          "caption": "役員の選出",
-          "content": "役員は正会員の中から次の方法で選出する。",
-          "items": [
-            "幹事長および副幹事長は、理事会にて選出し、総会の決議を経て決定する。",
-            "会計は総会において選出する。"
-          ]
-        },
-        {
-          "id": "officer-duties",
-          "caption": "役員の任務",
-          "content": "役員の任務は次のとおりとする。",
-          "items": [
-            "幹事長は、本会を代表し、会務を総括する。",
-            "副幹事長は、幹事長を補佐し、幹事長事故あるときは、その職務を代行する。",
-            "会計は、出納事務を掌握する。"
-          ]
-        },
-        {
-          "id": "president",
-          "caption": "会長",
-          "content": "本会に会長をおく。",
-          "paragraphs": [
-            {
-              "content": "会長の嘱任は、早稲田大学が行う。"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "meetings",
-      "title": "会議",
-      "articles": [
-        {
-          "id": "general-meeting",
-          "caption": "総会",
-          "content": "総会は、年1回開催し、次の事項を審議する。",
-          "items": [
-            "事業報告および決算の報告",
-            "事業計画および予算の審議",
-            "役員の選出および承認",
-            "その他必要と認められた事項"
-          ]
-        },
-        {
-          "id": "general-meeting-quorum",
-          "caption": "総会の定足数および議決",
-          "content": "総会は、会員総数の過半数をもって定足数とし、出席会員の過半数をもって議決する。定足数に達しないときは、理事会の決議をもって代える。"
-        },
-        {
-          "id": "board-convocation",
-          "caption": "理事会の招集",
-          "content": "理事会は、必要に応じて幹事長がこれを召集する。"
-        },
-        {
-          "id": "board-composition",
-          "caption": "理事会の構成および決議",
-          "content": "理事会は、幹事長、副幹事長、会計で構成し、その決議は全会一致による。"
-        }
-      ]
-    },
-    {
-      "id": "facilities",
-      "title": "施設と設備",
-      "articles": [
-        {
-          "id": "clubroom",
-          "caption": "部室",
-          "content": "本会は、部室をおく。",
-          "paragraphs": [
-            {
-              "content": "部室の規定については、学生会館規程・同施行細則に従う。"
-            }
-          ]
-        },
-        {
-          "id": "clubroom-eligibility",
-          "caption": "部室利用資格",
-          "content": "本会の部室の利用を希望する会員で、本会の事務局にて部室利用手続きを行ったものについて、理事会の決議をもって部室利用資格を与える。"
-        },
-        {
-          "id": "filming-consent",
-          "caption": "撮影への同意および著作権",
-          "content": "本会の部室を利用するものは、理事会の明示的な許可を得た撮影者による映像・写真撮影に同意したものとみなされる。また、撮影された全ての映像・写真の著作権は幹事長に帰属するものとする。"
-        },
-        {
-          "id": "clubroom-eligibility-loss",
-          "caption": "部室利用資格の喪失",
-          "content": "本会の部室について、次のいずれかに該当する行為を行ったものは、その利用資格を喪失する。",
-          "items": [
-            "本会の部室の不正な利用を教唆または幇助すること",
-            "本会の部室において、理事会の明示的な許可なく私物を保管すること",
-            "本会の部室において、本会の設備を損傷または汚損すること",
-            "本会の部室において、理事会の明示的な許可なく映像・写真を撮影すること",
-            "本会の部室において、他の利用者の正当な活動を著しく妨げること"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "finance",
-      "title": "会計",
-      "articles": [
-        {
-          "id": "fiscal-year",
-          "caption": "会計年度",
-          "content": "本会の会計年度は4月1日に始まり、翌年3月31日に終わる。"
-        },
-        {
-          "id": "expenses",
-          "caption": "経費",
-          "content": "本会の経費には、入会費・会費・補助金その他の収入をあてる。"
-        },
-        {
-          "id": "admission-fee",
-          "caption": "入会費",
-          "content": "本会の入会費は次のとおりとする。",
-          "items": [
-            "入会費は、2,000円とする。",
-            "幹事長は、任意の会員の入会費を免除できる。"
-          ]
-        },
-        {
-          "id": "membership-fee",
-          "caption": "会費",
-          "content": "本会の会費は次のとおりとする。",
-          "items": [
-            "会費は、年会費と臨時会費からなる。",
-            "年会費は、2,000円とする。",
-            "特に必要と認めるときは、臨時会費を徴収することができる。",
-            "幹事長は、任意の会員の会費を免除できる。",
-            "既納の入会費および会費は、いかなる理由があっても返還しないものとする。"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "bylaws",
-      "title": "会則",
-      "articles": [
-        {
-          "id": "amendment",
-          "caption": "会則の変更",
-          "content": "本会則を変更する場合には、理事会の決議を経なければならない。"
-        }
-      ]
-    }
-  ],
-  "supplementaryProvisions": [
-    {
-      "kind": "制定",
-      "effectiveDate": "2019-03-01"
-    },
-    {
-      "kind": "一部改正",
-      "effectiveDate": "2019-09-29"
-    },
-    {
-      "kind": "一部改正",
-      "effectiveDate": "2019-10-02"
-    },
-    {
-      "kind": "一部改正",
-      "effectiveDate": "2020-04-01"
-    },
-    {
-      "kind": "一部改正",
-      "effectiveDate": "2021-04-01"
-    },
-    {
-      "kind": "一部改正",
-      "effectiveDate": "2022-04-01"
-    }
-  ]
+  "kind": "会則",
+  "status": "active",
+  "body": {
+    "chapters": [
+      {
+        "uuid": "8dffbd3a-62f3-8b1f-acf2-4dbf5a9d0b3d",
+        "anchor": "name",
+        "name": "第一章",
+        "title": "名称",
+        "articles": [
+          {
+            "uuid": "72ab0753-67ed-8c9e-a6cf-5761731084ea",
+            "anchor": "name",
+            "name": "第一条",
+            "caption": "名称",
+            "paragraphs": [
+              {
+                "uuid": "d03f21cf-171c-8f89-a7e3-870315aa16bf",
+                "text": "本会は、コンピュータ研究会・WINCと称する。"
+              },
+              {
+                "uuid": "f0b2d11b-2e4b-81b5-a15f-ae5252c90807",
+                "text": "本会の事務局は、幹事長が指定する、早稲田大学の施設におく。"
+              },
+              {
+                "uuid": "e1423e01-e8ef-8578-a0aa-b626935f3d30",
+                "text": "事務局は、会計並びに会の運営に関する事務を行う。"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "13a2b52b-58b3-8356-a31e-d345c56258a6",
+        "anchor": "purpose-and-activities",
+        "name": "第二章",
+        "title": "目的と事業",
+        "articles": [
+          {
+            "uuid": "a5ee1b0e-1ba5-834c-a62b-547b45d65111",
+            "anchor": "purpose",
+            "name": "第二条",
+            "caption": "目的",
+            "paragraphs": [
+              {
+                "uuid": "74701168-25b1-8143-ae84-6b6b620291ca",
+                "text": "本会は、会員が、情報サービスを安全かつ有効に活用または提供するための知識、技術および資質の向上を図ることを目的とする。"
+              }
+            ]
+          },
+          {
+            "uuid": "8b30603d-f048-8ce3-af4c-92d3cacc9bc7",
+            "anchor": "activities",
+            "name": "第三条",
+            "caption": "事業",
+            "paragraphs": [
+              {
+                "uuid": "e9fa20fe-fcdb-8e5a-a31f-5afcb7e532c7",
+                "text": "本会は、前条の目的を達成するため、次の事業を行う。",
+                "items": [
+                  {
+                    "uuid": "2a60d460-379f-8458-a6be-11f81160158c",
+                    "text": "研究会、講習会、見学会などの開催"
+                  },
+                  {
+                    "uuid": "a7675cf8-0f1e-8da0-aef3-26249aa50d99",
+                    "text": "会報、研究資料その他の発行"
+                  },
+                  {
+                    "uuid": "2908f4d0-b566-8a68-a2fe-397e183f20fe",
+                    "text": "研究の遂行を目的とする施設および設備の提供"
+                  },
+                  {
+                    "uuid": "0f77dbca-33ae-836f-a36c-c25b8ec4dd65",
+                    "text": "その他本会の目的達成に必要な事項"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "1c7760f3-bf58-854b-a959-f02dc294008c",
+        "anchor": "composition",
+        "name": "第三章",
+        "title": "構成",
+        "articles": [
+          {
+            "uuid": "5dbca7de-aae1-8dec-aaf1-4efc0d0d1ca2",
+            "anchor": "members",
+            "name": "第四条",
+            "caption": "会員",
+            "paragraphs": [
+              {
+                "uuid": "698990c3-ae89-81b8-ac62-fbf1bd55cb91",
+                "text": "本会の会員は次のとおりとする。",
+                "items": [
+                  {
+                    "uuid": "defecfdd-3726-84fd-a211-ce998cd1393d",
+                    "text": "正会員\n本会の趣旨に賛同し、所定の手続きを経て入会し、通常会費を納める早稲田大学の正規学生"
+                  },
+                  {
+                    "uuid": "c9ea7e63-6205-897d-a8e8-36b5e06a5679",
+                    "text": "学外会員\n本会の趣旨に賛同し、所定の手続きを経て入会し、通常会費を納める早稲田大学以外の大学の正規学生"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "c372acbd-f26a-833d-ad4d-75964e64e6c4",
+        "anchor": "rights-and-duties",
+        "name": "第四章",
+        "title": "会員の権利と義務",
+        "articles": [
+          {
+            "uuid": "5ec5cb2e-d521-835d-ac28-b1cd00f9d98b",
+            "anchor": "member-rights",
+            "name": "第五条",
+            "caption": "会員の権利",
+            "paragraphs": [
+              {
+                "uuid": "5a3958e1-92f2-843d-abf7-0376ce973f0c",
+                "text": "本会の会員は次の権利を有する。",
+                "items": [
+                  {
+                    "uuid": "73a9d538-5249-8a63-a2a4-f2c5ab2e95d8",
+                    "text": "本会の事業に関する情報を受けること"
+                  },
+                  {
+                    "uuid": "9fb4d8c6-487a-8d94-a12d-a97a5c37b8f0",
+                    "text": "本会の事業において活動を行うこと"
+                  },
+                  {
+                    "uuid": "2eca2f81-585b-88ea-ac67-6702d0272076",
+                    "text": "総会に参加すること"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "uuid": "2435d620-7176-8f2d-af4e-abe96fdfed0a",
+            "anchor": "member-duties",
+            "name": "第六条",
+            "caption": "会員の義務",
+            "paragraphs": [
+              {
+                "uuid": "d77751bd-267b-8640-ac8e-e501403b6fa2",
+                "text": "本会の会員は次の義務を負う。",
+                "items": [
+                  {
+                    "uuid": "0379d66e-90fe-81fd-a23f-507e5420bd6c",
+                    "text": "本会へ会費を納入すること"
+                  },
+                  {
+                    "uuid": "e524ffbe-c6c2-87ac-adeb-d7b43b9061e2",
+                    "text": "本会の運営に協力すること"
+                  },
+                  {
+                    "uuid": "f6a8421e-c7fb-8782-a69e-48256d28e834",
+                    "text": "本会の行動規範を尊重すること"
+                  },
+                  {
+                    "uuid": "5e9937ba-b323-8b88-ad23-792f63e41ac2",
+                    "text": "所属および連絡先情報を本会へ提供すること"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "da3fc63a-448c-8e45-a1ad-404c193ec45c",
+        "anchor": "admission-and-withdrawal",
+        "name": "第五章",
+        "title": "会員の入会と退会",
+        "articles": [
+          {
+            "uuid": "b4287d6b-95a0-81d3-a8fe-203126a46288",
+            "anchor": "admission",
+            "name": "第七条",
+            "caption": "入会",
+            "paragraphs": [
+              {
+                "uuid": "55491346-7171-86bd-a367-993e201eabea",
+                "text": "本会への入会手続きを行ったものを、理事会の決議をもって会員とする。"
+              }
+            ]
+          },
+          {
+            "uuid": "39fb2fd5-0527-8e70-ac2d-53b8010d39dd",
+            "anchor": "loss-of-membership",
+            "name": "第八条",
+            "caption": "会員資格の喪失",
+            "paragraphs": [
+              {
+                "uuid": "2bc34bdb-52cb-8e68-a8da-9c82bf0ccc11",
+                "text": "本会の会員は、次のいずれかに該当するときは、その資格を喪失する。",
+                "items": [
+                  {
+                    "uuid": "5a0d9eb1-1fd1-8c12-ad14-f54eeeddf9aa",
+                    "text": "第6条の義務に違反する行為があったとき"
+                  },
+                  {
+                    "uuid": "6908dde3-2eaf-8d0f-a54b-d63921c10ac6",
+                    "text": "本会の活動を著しく妨げるような行為があったとき"
+                  },
+                  {
+                    "uuid": "4b9abc36-44de-86b3-a826-43e6ec9e3de1",
+                    "text": "1か月以上本会からの連絡が不能であるとき"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "uuid": "c7de58c3-507b-8bc9-ae8f-9bbcfe972f6f",
+            "anchor": "withdrawal",
+            "name": "第九条",
+            "caption": "退会",
+            "paragraphs": [
+              {
+                "uuid": "af9afc04-ed01-899e-a474-599f2ca9a98d",
+                "text": "退会を希望する会員は、本会の事務局にて退会手続きを行わなければならない。ただし、第8条に該当するときには、理事会において退会を審議・確認するものとする。"
+              }
+            ]
+          },
+          {
+            "uuid": "077b78d4-d8dc-8b82-a6d0-4b3008698754",
+            "anchor": "officers",
+            "name": "第十条",
+            "caption": "役員",
+            "paragraphs": [
+              {
+                "uuid": "a76f4da9-b7c5-83c6-acaf-74465f7db692",
+                "text": "本会に次の役員をおく。その任期は1年とし、再任はさまたげない。",
+                "items": [
+                  {
+                    "uuid": "a91c83c7-57c5-85b6-a498-20d9597feeb9",
+                    "text": "幹事長 1名"
+                  },
+                  {
+                    "uuid": "0cd38000-83d6-8b22-a00f-29a0351957d0",
+                    "text": "副幹事長 1名"
+                  },
+                  {
+                    "uuid": "b23471c3-2fd9-8300-a0ed-8baf9cb6b1ea",
+                    "text": "会計 1名"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "uuid": "26916dcf-bd7a-857d-ab2e-4239f330b7fd",
+            "anchor": "officer-election",
+            "name": "第十一条",
+            "caption": "役員の選出",
+            "paragraphs": [
+              {
+                "uuid": "a59cd89b-a199-88c9-a5df-2ab877136baf",
+                "text": "役員は正会員の中から次の方法で選出する。",
+                "items": [
+                  {
+                    "uuid": "cfa9c6ab-73f9-8faa-a635-06e0f11e4a93",
+                    "text": "幹事長および副幹事長は、理事会にて選出し、総会の決議を経て決定する。"
+                  },
+                  {
+                    "uuid": "15b6d254-29b7-8d22-a70b-e177d552b66b",
+                    "text": "会計は総会において選出する。"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "uuid": "d5f4dd0f-9aaa-8608-a028-504c75ff84ed",
+            "anchor": "officer-duties",
+            "name": "第十二条",
+            "caption": "役員の任務",
+            "paragraphs": [
+              {
+                "uuid": "d22f42fb-f84e-89e1-a1fd-c3c0ab946050",
+                "text": "役員の任務は次のとおりとする。",
+                "items": [
+                  {
+                    "uuid": "80889c8f-5909-8105-ac63-5f75555feec5",
+                    "text": "幹事長は、本会を代表し、会務を総括する。"
+                  },
+                  {
+                    "uuid": "e34c3a69-dcdc-877e-acf0-9d6e8a3f34d7",
+                    "text": "副幹事長は、幹事長を補佐し、幹事長事故あるときは、その職務を代行する。"
+                  },
+                  {
+                    "uuid": "00b6c55e-dd0e-8af1-a3c9-6cdd725dff67",
+                    "text": "会計は、出納事務を掌握する。"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "uuid": "94a4f689-9d3f-8669-a49c-70fbf25741c2",
+            "anchor": "president",
+            "name": "第十三条",
+            "caption": "会長",
+            "paragraphs": [
+              {
+                "uuid": "825197a6-acdc-838e-a98d-4844e6d16a88",
+                "text": "本会に会長をおく。"
+              },
+              {
+                "uuid": "c5cb68bd-a7fc-80ed-afbb-b32dcd0240e7",
+                "text": "会長の嘱任は、早稲田大学が行う。"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "9ea6c3f6-8c4d-84c6-acfe-75805a132bf9",
+        "anchor": "meetings",
+        "name": "第六章",
+        "title": "会議",
+        "articles": [
+          {
+            "uuid": "2a5fde88-f418-893c-a87c-d5cbb3e957dc",
+            "anchor": "general-meeting",
+            "name": "第十四条",
+            "caption": "総会",
+            "paragraphs": [
+              {
+                "uuid": "11e7295c-8799-845a-a1b0-7d80b3fdb685",
+                "text": "総会は、年1回開催し、次の事項を審議する。",
+                "items": [
+                  {
+                    "uuid": "b4fe10b8-1fc7-818f-a50e-32ab028bbf3a",
+                    "text": "事業報告および決算の報告"
+                  },
+                  {
+                    "uuid": "3942e4f9-2067-839e-a66d-ef31d4d3ccc8",
+                    "text": "事業計画および予算の審議"
+                  },
+                  {
+                    "uuid": "831879a5-46d9-83f0-a9b2-83d67c58be7d",
+                    "text": "役員の選出および承認"
+                  },
+                  {
+                    "uuid": "35cf7d9d-3072-8d14-a6a8-24380641a1a4",
+                    "text": "その他必要と認められた事項"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "uuid": "89c05280-944a-8817-ae17-1e43e491fdeb",
+            "anchor": "general-meeting-quorum",
+            "name": "第十五条",
+            "caption": "総会の定足数および議決",
+            "paragraphs": [
+              {
+                "uuid": "69e6f2b0-b110-86a2-aec6-2174d9504272",
+                "text": "総会は、会員総数の過半数をもって定足数とし、出席会員の過半数をもって議決する。定足数に達しないときは、理事会の決議をもって代える。"
+              }
+            ]
+          },
+          {
+            "uuid": "4270e7b0-1a23-804b-a9f0-a094e8dd7847",
+            "anchor": "board-convocation",
+            "name": "第十六条",
+            "caption": "理事会の招集",
+            "paragraphs": [
+              {
+                "uuid": "21567f66-d84a-8080-a69a-e71e39ee6fdb",
+                "text": "理事会は、必要に応じて幹事長がこれを召集する。"
+              }
+            ]
+          },
+          {
+            "uuid": "c1487128-b4f5-8499-a687-48d25b736a26",
+            "anchor": "board-composition",
+            "name": "第十七条",
+            "caption": "理事会の構成および決議",
+            "paragraphs": [
+              {
+                "uuid": "52ae5c54-ce78-8e10-a12c-e74093b6467f",
+                "text": "理事会は、幹事長、副幹事長、会計で構成し、その決議は全会一致による。"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "908094e6-261d-80d9-a006-7285bbf0c082",
+        "anchor": "facilities",
+        "name": "第七章",
+        "title": "施設と設備",
+        "articles": [
+          {
+            "uuid": "91efb309-ef46-84fa-a734-4774b10c3873",
+            "anchor": "clubroom",
+            "name": "第十八条",
+            "caption": "部室",
+            "paragraphs": [
+              {
+                "uuid": "967147cf-ec96-8e58-ae62-bf94f0aac129",
+                "text": "本会は、部室をおく。"
+              },
+              {
+                "uuid": "cde50a74-1e3e-82cf-aeac-bdd0375da854",
+                "text": "部室の規定については、学生会館規程・同施行細則に従う。"
+              }
+            ]
+          },
+          {
+            "uuid": "ae9c1d43-9590-83f7-a0b0-72bba7c50936",
+            "anchor": "clubroom-eligibility",
+            "name": "第十九条",
+            "caption": "部室利用資格",
+            "paragraphs": [
+              {
+                "uuid": "b8a76a81-764a-8139-a2ed-ea50f2b7911e",
+                "text": "本会の部室の利用を希望する会員で、本会の事務局にて部室利用手続きを行ったものについて、理事会の決議をもって部室利用資格を与える。"
+              }
+            ]
+          },
+          {
+            "uuid": "6af1b0d4-ea06-8700-af40-0daa608c32ff",
+            "anchor": "filming-consent",
+            "name": "第二十条",
+            "caption": "撮影への同意および著作権",
+            "paragraphs": [
+              {
+                "uuid": "975a2d56-58b6-8f83-a7b8-d23cc88d17dd",
+                "text": "本会の部室を利用するものは、理事会の明示的な許可を得た撮影者による映像・写真撮影に同意したものとみなされる。また、撮影された全ての映像・写真の著作権は幹事長に帰属するものとする。"
+              }
+            ]
+          },
+          {
+            "uuid": "2d24e7e4-d759-8299-a14b-00c82240d9cf",
+            "anchor": "clubroom-eligibility-loss",
+            "name": "第二十一条",
+            "caption": "部室利用資格の喪失",
+            "paragraphs": [
+              {
+                "uuid": "316ed722-d039-87d9-a1a0-41babfdb288d",
+                "text": "本会の部室について、次のいずれかに該当する行為を行ったものは、その利用資格を喪失する。",
+                "items": [
+                  {
+                    "uuid": "26f864c1-53b3-83a4-a60d-6fff6b0e97e1",
+                    "text": "本会の部室の不正な利用を教唆または幇助すること"
+                  },
+                  {
+                    "uuid": "72791659-4507-86ef-a8b6-cef24a92352f",
+                    "text": "本会の部室において、理事会の明示的な許可なく私物を保管すること"
+                  },
+                  {
+                    "uuid": "6bab096b-62c7-829c-a263-6eb1cdb1f883",
+                    "text": "本会の部室において、本会の設備を損傷または汚損すること"
+                  },
+                  {
+                    "uuid": "4279a1f9-b83b-8481-a272-64d33cf03206",
+                    "text": "本会の部室において、理事会の明示的な許可なく映像・写真を撮影すること"
+                  },
+                  {
+                    "uuid": "1e59c17d-0564-8048-a8ad-9a6a0528194e",
+                    "text": "本会の部室において、他の利用者の正当な活動を著しく妨げること"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "7b27e2ab-45d3-8bc2-ab93-60fc6881fd18",
+        "anchor": "finance",
+        "name": "第八章",
+        "title": "会計",
+        "articles": [
+          {
+            "uuid": "e7f1468b-cb33-8e78-a1e2-7e6187dade45",
+            "anchor": "fiscal-year",
+            "name": "第二十二条",
+            "caption": "会計年度",
+            "paragraphs": [
+              {
+                "uuid": "0d237944-4e99-8283-a603-c7f4173b8a1c",
+                "text": "本会の会計年度は4月1日に始まり、翌年3月31日に終わる。"
+              }
+            ]
+          },
+          {
+            "uuid": "d3475be4-6168-8680-a530-a1e44bd19a75",
+            "anchor": "expenses",
+            "name": "第二十三条",
+            "caption": "経費",
+            "paragraphs": [
+              {
+                "uuid": "dee38511-136e-8802-a5e5-d26df99bae84",
+                "text": "本会の経費には、入会費・会費・補助金その他の収入をあてる。"
+              }
+            ]
+          },
+          {
+            "uuid": "d4cc4e10-dd21-88cb-a263-27ca0010adbf",
+            "anchor": "admission-fee",
+            "name": "第二十四条",
+            "caption": "入会費",
+            "paragraphs": [
+              {
+                "uuid": "47a6d3a1-6659-8443-aa48-991c234f691f",
+                "text": "本会の入会費は次のとおりとする。",
+                "items": [
+                  {
+                    "uuid": "b2770ebc-c3c6-8de6-af3d-f0fde814ea08",
+                    "text": "入会費は、2,000円とする。"
+                  },
+                  {
+                    "uuid": "7c2e9ddc-1572-87fa-a235-5952bd51bd8b",
+                    "text": "幹事長は、任意の会員の入会費を免除できる。"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "uuid": "468e361c-c211-8991-a774-b7605ab62f4f",
+            "anchor": "membership-fee",
+            "name": "第二十五条",
+            "caption": "会費",
+            "paragraphs": [
+              {
+                "uuid": "d3698e49-085d-8633-a808-00d784f7960b",
+                "text": "本会の会費は次のとおりとする。",
+                "items": [
+                  {
+                    "uuid": "2c12e921-fed4-8bed-a578-fff56838d145",
+                    "text": "会費は、年会費と臨時会費からなる。"
+                  },
+                  {
+                    "uuid": "d4759217-c5e2-8650-aef7-ba2bdf8dc8c5",
+                    "text": "年会費は、2,000円とする。"
+                  },
+                  {
+                    "uuid": "eda7424b-15df-8942-a765-f6330384a8fd",
+                    "text": "特に必要と認めるときは、臨時会費を徴収することができる。"
+                  },
+                  {
+                    "uuid": "592fe6f3-1439-8421-ab41-c8a38497af39",
+                    "text": "幹事長は、任意の会員の会費を免除できる。"
+                  },
+                  {
+                    "uuid": "235d45ef-248c-890d-acf9-892b16aa0c64",
+                    "text": "既納の入会費および会費は、いかなる理由があっても返還しないものとする。"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "39f5118e-258f-8fe3-aaac-976822c426ee",
+        "anchor": "bylaws",
+        "name": "第九章",
+        "title": "会則",
+        "articles": [
+          {
+            "uuid": "6bfc325c-99d5-82aa-ad38-216d23b9e6c9",
+            "anchor": "amendment",
+            "name": "第二十六条",
+            "caption": "会則の変更",
+            "paragraphs": [
+              {
+                "uuid": "e6e6f5f3-eba4-8f0b-acb1-72b6ee07f65e",
+                "text": "本会則を変更する場合には、理事会の決議を経なければならない。"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

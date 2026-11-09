@@ -1,18 +1,31 @@
 {
-  "extends": "astro/tsconfigs/strict",
-  "include": [
-    ".astro/types.d.ts",
-    "src/**/*",
-    "scripts/**/*"
-  ],
-  "exclude": [
-    "dist",
-    "src/generated/validate-law.mjs"
-  ],
   "compilerOptions": {
-    "resolveJsonModule": true,
-    "allowJs": true,
+    "target": "ESNext",
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
     "jsx": "react-jsx",
-    "jsxImportSource": "react"
-  }
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "types": [
+      "bun"
+    ]
+  },
+  "include": [
+    "src/domain/**/*",
+    "src/generated/document.d.ts",
+    "src/server/**/*",
+    "src/web/**/*",
+    "scripts/*.ts",
+    "scripts/*.tsx",
+    "tests/**/*.ts",
+    "playwright.config.ts"
+  ]
 }

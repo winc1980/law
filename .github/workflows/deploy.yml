@@ -1,4 +1,4 @@
-name: GitHub Pages へ公開
+name: 原本閲覧サイトの公開
 
 on:
   push:
@@ -10,42 +10,29 @@ permissions:
   pages: write
   id-token: write
 
-# 公開中に別の公開が走らないようにする。実行中のものは中断しない。
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
   build:
-    name: ビルド
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
-
-      # main では、施行日の決まっていない附則を残したまま公開しない
-      - run: npm run validate:strict
-
-      # npm run build はスキーマ検証とテストを通してから astro build する。
-      # GitHub 認証の中継（auth/）を立てていれば、その設定をここで埋め込む。
-      # 未設定なら、編集ページは個人アクセストークンを貼る経路になる。
-      - run: npm run build
-        env:
-          PUBLIC_GH_CLIENT_ID: ${{ vars.GH_OAUTH_CLIENT_ID }}
-          PUBLIC_GH_AUTH_ENDPOINT: ${{ vars.GH_AUTH_ENDPOINT }}
-
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bun run verify
+      - run: bunx --bun playwright install --with-deps chromium
+      - run: bun run test:browser
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
-
   deploy:
-    name: 公開
     needs: build
     runs-on: ubuntu-latest
     environment:

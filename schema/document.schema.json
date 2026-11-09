@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "document.schema.json",
+  "title": "Document",
+  "description": "会の規則・決定の原本。uuidは初回コミット前に補完し、以後変更しない。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "title", "kind", "status", "body"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": 1},
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+    "uuid": {"$ref": "#/$defs/UUID"},
+    "title": {"type": "string", "minLength": 1},
+    "kind": {"enum": ["会則", "運営規則", "執行部公示", "執行部決定", "その他"]},
+    "status": {"enum": ["active", "repealed"]},
+    "body": {"oneOf": [{"type": "string", "minLength": 1}, {"$ref": "#/$defs/StructuredBody"}]}
+  },
+  "allOf": [{"if": {"properties": {"kind": {"enum": ["会則", "運営規則"]}}}, "then": {"properties": {"body": {"$ref": "#/$defs/StructuredBody"}}}}],
+  "$defs": {
+    "UUID": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+    "Anchor": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+    "Item": {
+      "type": "object", "additionalProperties": false, "required": ["text"],
+      "properties": {"uuid": {"$ref": "#/$defs/UUID"}, "text": {"type": "string", "minLength": 1}}
+    },
+    "Paragraph": {
+      "type": "object", "additionalProperties": false, "required": ["text"],
+      "properties": {"uuid": {"$ref": "#/$defs/UUID"}, "text": {"type": "string", "minLength": 1}, "items": {"type": "array", "items": {"$ref": "#/$defs/Item"}}}
+    },
+    "Article": {
+      "type": "object", "additionalProperties": false, "required": ["name", "paragraphs"],
+      "properties": {
+        "uuid": {"$ref": "#/$defs/UUID"}, "anchor": {"$ref": "#/$defs/Anchor"},
+        "name": {"type": "string", "minLength": 1}, "caption": {"type": "string"},
+        "paragraphs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/Paragraph"}}
+      }
+    },
+    "Chapter": {
+      "type": "object", "additionalProperties": false, "required": ["name", "title", "articles"],
+      "properties": {
+        "uuid": {"$ref": "#/$defs/UUID"}, "anchor": {"$ref": "#/$defs/Anchor"},
+        "name": {"type": "string", "minLength": 1}, "title": {"type": "string", "minLength": 1},
+        "articles": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/Article"}}
+      }
+    },
+    "Provision": {
+      "type": "object", "additionalProperties": false, "required": ["title", "articles"],
+      "properties": {
+        "uuid": {"$ref": "#/$defs/UUID"}, "title": {"type": "string", "minLength": 1},
+        "articles": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/Article"}}
+      }
+    },
+    "StructuredBody": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "preamble": {"type": "string"},
+        "articles": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/Article"}},
+        "chapters": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/Chapter"}},
+        "supplementaryProvisions": {"type": "array", "items": {"$ref": "#/$defs/Provision"}}
+      },
+      "oneOf": [{"required": ["articles"], "not": {"required": ["chapters"]}}, {"required": ["chapters"], "not": {"required": ["articles"]}}]
+    }
+  }
+}

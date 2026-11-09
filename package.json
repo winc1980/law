@@ -1,33 +1,39 @@
 {
   "name": "winc-law",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "コンピュータ研究会・WINC の会則および諸規則",
+  "description": "会の規則・決定のJSON原本と閲覧・編集ツール",
+  "packageManager": "bun@1.4.2",
   "scripts": {
-    "gen:types": "node scripts/gen-types.mjs",
-    "gen:validator": "node scripts/gen-validator.mjs",
-    "gen": "npm run gen:types && npm run gen:validator",
-    "validate": "node scripts/validate.mjs",
-    "validate:strict": "node scripts/validate.mjs --strict",
-    "test": "node --test scripts/test.mjs",
-    "dev": "astro dev",
-    "build": "npm run validate && npm run test && astro build",
-    "preview": "astro preview",
-    "check": "npm run validate && npm run test && astro check"
+    "dev": "bun --hot src/server/index.ts",
+    "generate": "bun scripts/generate.ts",
+    "validate": "bun scripts/validate.ts",
+    "check": "bun scripts/generate.ts --check && bunx --bun tsc --noEmit",
+    "test": "bun test ./tests/unit",
+    "commit": "git -c core.hooksPath=.githooks commit",
+    "test:browser": "bunx --bun playwright test",
+    "build": "bun scripts/build.tsx",
+    "verify": "bun run validate && bun run check && bun run test && bun run build",
+    "prepare:commit": "bun scripts/prepare-commit.ts",
+    "hooks:install": "bun scripts/install-hooks.ts",
+    "migrate": "bun scripts/migrate.ts"
   },
   "dependencies": {
-    "@astrojs/react": "^6.0.2",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
-    "astro": "^5.14.1",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "ajv": "8.20.0",
+    "diff": "8.0.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-router": "7.18.5"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.4",
-    "ajv": "^8.17.1",
-    "json-schema-to-typescript": "^15.0.4",
-    "typescript": "^5.9.2"
+    "@playwright/test": "1.65.0",
+    "@types/bun": "1.4.4",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "bun-plugin-tailwind": "0.1.2",
+    "json-schema-to-typescript": "15.0.4",
+    "tailwindcss": "4.3.5",
+    "typescript": "5.9.3"
   }
 }

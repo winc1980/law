@@ -1,0 +1,8 @@
+[install]
+peer = false
+
+[serve.static]
+plugins = ["bun-plugin-tailwind"]
+
+[test]
+root = "./tests/unit"

@@ -1,4 +1,4 @@
-name: 検証
+name: 原本とWebシステムの検証
 
 on:
   pull_request:
@@ -9,29 +9,16 @@ permissions:
   contents: read
 
 jobs:
-  validate:
-    name: スキーマ検証とビルド
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
-
-      # 生成物が schema/ と食い違ったまま放置されないようにする
-      - name: 生成物が最新か確認
-        run: |
-          npm run gen
-          git diff --exit-code src/types/law.d.ts src/generated/
-
-      - run: npm run validate
-
-      - run: npm test
-
-      - run: npx astro check
-
-      - run: npx astro build
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bun run verify
+      - run: bunx --bun playwright install --with-deps chromium
+      - run: bun run test:browser
