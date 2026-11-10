@@ -15,6 +15,7 @@
     "test:browser": "bunx --bun playwright test",
     "test:browser:webkit": "LAW_TEST_BROWSER=webkit bunx --bun playwright test",
     "build": "bun scripts/build.tsx",
+    "build:pages": "bun scripts/build-pages.ts",
     "verify": "bun run validate && bun run check && bun run test && bun run build",
     "prepare:commit": "bun scripts/prepare-commit.ts",
     "hooks:install": "bun scripts/install-hooks.ts",

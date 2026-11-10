@@ -13,16 +13,17 @@ await Bun.write(
 );
 const server = createServer({ port: 3107, directory: dir });
 const dist = resolve(import.meta.dir, "../../dist");
+const base = process.env.LAW_BASE_PATH ?? "/";
 const staticServer = Bun.serve({
   hostname: "127.0.0.1",
   port: 3108,
   async fetch(req) {
     const url = new URL(req.url);
-    if (!url.pathname.startsWith("/law/"))
+    if (!url.pathname.startsWith(base))
       return new Response("Not found", { status: 404 });
     const path = resolve(
       dist,
-      url.pathname.slice(5),
+      url.pathname.slice(base.length),
       url.pathname.endsWith("/") ? "index.html" : "",
     );
     if (!path.startsWith(`${dist}/`))

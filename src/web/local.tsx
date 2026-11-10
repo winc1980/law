@@ -4,7 +4,6 @@ import { BrowserRouter } from "react-router";
 
 import { App } from "./App";
 import { api } from "./api";
-import { EditPage, NewPage } from "./pages/Editor";
 import type { Bootstrap } from "./types";
 
 const root = createRoot(document.getElementById("root")!);
@@ -12,10 +11,7 @@ api<Bootstrap>("/api/session")
   .then((data) => {
     root.render(
       <BrowserRouter>
-        <App
-          data={data}
-          localPages={{ editor: <EditPage />, create: <NewPage /> }}
-        />
+        <App data={data} />
       </BrowserRouter>,
     );
   })

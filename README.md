@@ -17,6 +17,8 @@ bun run dev
 
 文書一覧から閲覧・編集でき、「新規作成」から規則・決定を作成できます。第1項は条名に続けて表示し、第2項以降に項番号を付けます。章・条・項・号・附則を編集でき、単一文字列の決定・公示も扱えます。本文はプレーンテキストで、改行を保持します。
 
+公開サイトでも編集・新規作成ができ、「JSONをダウンロード」で変更後のJSONを取得できます。ダウンロードしたファイルはリポジトリの`data/`へ配置してPRを作成します。公開サイト上の編集内容はブラウザ内だけで保持し、公開中の原本は変更しません。ダウンロード前に画面を閉じると変更は失われます。
+
 閲覧画面は左に変更履歴と目次、右に条文を表示し、それぞれ独立してスクロールします。目次の目のボタンで表示・非表示を切り替えられます。条文比較は変更後・変更前を同じ行に揃え、変更部分を黄色で示します。「変更箇所のみ」と前後の差分への移動も使えます。編集画面の構造操作は、入力中の条・項の近くに表示します。
 
 ## 編集してPRを作成する
@@ -81,6 +83,8 @@ UIでは編集中の対応付け用にUUIDを先に確保し、その値をコ�
 
 差分は「Gitの比較元 → 編集中」を表示します。ファイルへ保存しても比較元を変更しないため、差分は残ります。未保存かどうかは「保存済み → 編集中」で別に判定します。UUIDで同じ条・項・号を追跡し、名称変更・移動・本文変更を分けて表示します。
 
+公開サイトの編集画面では「公開中の本文 → 編集中」の差分を表示します。JSONをダウンロードしても比較元は変わりません。Ctrl+S（MacではCmd+S）は、ローカルでは原本を保存し、公開サイトではJSONをダウンロードします。いずれも入力内容の検証に通る必要があります。
+
 変更履歴からGitの各版を選び、当時の本文や現在の本文との差分を表示できます。旧形式の版も読み込み時に変換します。過去の本文を、制定・施行日の一覧から推測して作ることはありません。ファイル改名の追跡は初期実装の対象外です。
 
 保存時は構造・ID・名称等を検証し、読み込み後に他のエディタで原本が変更されていたら上書きせずに通知します。Undo/Redoは現在の編集セッション内で使えます。別プロセスとの同時共同編集は対象外です。
@@ -110,7 +114,8 @@ bun run generate       # スキーマから型生成
 bun run validate       # 全原本とUUIDを検証
 bun run check          # 生成型の整合性とTypeScriptの型チェック
 bun run test           # 原本・差分・保存・Git処理のテスト
-bun run build          # 閲覧専用の静的サイトをdist/へ生成
+bun run build          # 公開用の静的サイトをdist/へ生成
+bun run build:pages    # Git履歴を揃えて検証・ビルド（Cloudflare Pages用）
 bun run verify         # CIと同じ検証・型チェック・テスト・ビルド
 bunx --bun playwright install chromium
 bun run test:browser   # 一時原本で実行。実データは変更しない
@@ -120,8 +125,31 @@ bun run test:browser:webkit # Safari系エンジンで同じ操作を検証
 
 ブラウザテストでインストール済みのChromiumを使う場合は`LAW_CHROMIUM_PATH`に実行ファイルを指定できます。
 
-公開先はGitHub Pagesを想定し、既定のbase pathは`/law/`です。`LAW_BASE_PATH=/ bun run build`で変更できます。文書ごとにHTMLを出力するため、直接アクセスでも本文を読めます。公開物には編集画面のコード・保存APIを含めません。`/edit/...`はローカル編集の案内です。履歴の公開には過去のGit情報が必要なので、CIでは`fetch-depth: 0`でチェックアウトします。
+公開先はCloudflare Pagesを想定し、既定のbase pathは`/`です。`LAW_BASE_PATH=/law/ bun run build`のようにサブパスへ変更することもできます。文書ごとにHTMLを出力するため、直接アクセスでも本文を読めます。公開物にはブラウザ内で動作する編集画面を含め、保存APIは含めません。`/edit/...`で既存文書を編集し、`/new/`で新規作成できます。`404.html`も出力するため、存在しないURLにはCloudflare Pagesの404ページを表示します。
 
-PRとmainで同じ原本検証・型チェック・テスト・ビルド・ブラウザテストを実行します。mainへのpushで公開します。GitHub側のPages設定・ブランチ保護は別途設定してください。mainへのマージが施行の基準で、公開ページはデプロイ完了後にその内容へ更新されます。
+### Cloudflare Pagesに登録する
+
+Cloudflareの「Workers & Pages」からPagesを作成し、「Import an existing Git repository」でこのGitHubリポジトリを接続します。[公式の登録手順](https://developers.cloudflare.com/pages/framework-guides/deploy-anything/)も参照してください。
+
+| 設定項目               | 値                                                     |
+| ---------------------- | ------------------------------------------------------ |
+| Production branch      | `main`                                                 |
+| Framework preset       | `None`                                                 |
+| Root directory         | リポジトリのルート（空欄）                             |
+| Build command          | `bun install --frozen-lockfile && bun run build:pages` |
+| Build output directory | `dist`                                                 |
+
+ProductionとPreviewの両方に次のビルド環境変数を設定します。
+
+| 環境変数                  | 値      |
+| ------------------------- | ------- |
+| `BUN_VERSION`             | `1.4.2` |
+| `SKIP_DEPENDENCY_INSTALL` | `1`     |
+
+`BUN_VERSION`でCIと同じBunを使い、`SKIP_DEPENDENCY_INSTALL`で自動インストールを止めてビルドコマンド内の固定lockfileによるインストールを使います。[Cloudflareのビルド環境](https://developers.cloudflare.com/pages/configuration/build-image/)で提供される設定です。`LAW_BASE_PATH`は未設定にします。以前の`/law/`設定が残っている場合は削除するか`/`へ変更してください。
+
+`build:pages`は浅いGitクローンの場合に`git fetch --unshallow origin`で過去の履歴を取得し、原本検証・型チェック・テスト・ビルドを実行します。履歴の取得に失敗した場合は公開を停止します。出力先は`dist/`のままにしてください。
+
+登録後はmainへのpushで本番サイトが更新され、他ブランチではプレビューを確認できます。GitHub ActionsではPRとmainを含むpushで同じ原本検証・型チェック・テスト・ビルド・ブラウザテストを実行します。GitHub Pagesへの公開ワークフローは使用しません。既存のGitHub Pagesサイトを停止する場合は、GitHub側のSettings → Pagesで公開を解除してください。ブランチ保護は別途設定してください。mainへのマージが施行の基準で、公開ページはデプロイ完了後にその内容へ更新されます。
 
 旧原本の移行は`bun run migrate`で明示実行します。現行会則はすでに移行済みです。旧形式の本文・固定リンクを保持し、UUIDと条名を補いました。旧形式にあった日付のみの制定・改正記録は原本から外し、過去のGit履歴に残しています。

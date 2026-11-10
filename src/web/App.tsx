@@ -30,18 +30,13 @@ import {
   RevisionList,
   useRevisions,
 } from "./components/DocumentNavigation";
+import { EditPage, NewPage } from "./pages/Editor";
 import type { Bootstrap } from "./types";
 
 const Data = createContext<Bootstrap>(null!);
 export const useData = () => useContext(Data);
 
-export function App({
-  data,
-  localPages,
-}: {
-  data: Bootstrap;
-  localPages?: { editor: React.ReactNode; create: React.ReactNode };
-}) {
+export function App({ data }: { data: Bootstrap }) {
   const location = useLocation();
   useEffect(() => {
     let target = "";
@@ -72,7 +67,7 @@ export function App({
         </Link>
         <nav aria-label="メインメニュー" className="flex gap-4.5 max-md:gap-3">
           <Link to="/">文書一覧</Link>
-          {data.mode === "local" && <Link to="/new/">新規作成</Link>}
+          <Link to="/new/">新規作成</Link>
         </nav>
         {data.mode === "local" && (
           <span className="mode-label ml-auto text-subtle">ローカル</span>
@@ -82,14 +77,8 @@ export function App({
         <Route path="/" element={<Index />} />
         <Route path="/laws/:id/" element={<DocumentReader />} />
         <Route path="/history/:id/" element={<DocumentReader />} />
-        <Route
-          path="/edit/:id/"
-          element={data.mode === "local" ? localPages?.editor : <LocalGuide />}
-        />
-        <Route
-          path="/new/"
-          element={data.mode === "local" ? localPages?.create : <LocalGuide />}
-        />
+        <Route path="/edit/:id/" element={<EditPage />} />
+        <Route path="/new/" element={<NewPage />} />
         <Route path="*" element={<Missing />} />
       </Routes>
     </Data.Provider>
@@ -365,7 +354,7 @@ function DocumentReader() {
             >
               履歴・目次
             </button>
-            {data.mode === "local" && <Link to={`/edit/${id}/`}>編集する</Link>}
+            <Link to={`/edit/${id}/`}>編集する</Link>
           </div>
         }
       />
@@ -512,21 +501,6 @@ function DocumentReader() {
   );
 }
 
-function LocalGuide() {
-  return (
-    <main
-      id="main"
-      className="guide-page content-page [&_pre]:my-3 [&_pre]:font-mono [&_pre]:text-[13px] [&_pre]:leading-[1.8]"
-    >
-      <h1>ローカルで編集する</h1>
-      <pre>
-        git clone https://github.com/winc1980/law.git{"\n"}cd law{"\n"}bun
-        install{"\n"}bun run dev
-      </pre>
-      <Link to="/">文書一覧へ</Link>
-    </main>
-  );
-}
 function Missing() {
   return (
     <main id="main" className="empty-state p-4 text-[13px]">

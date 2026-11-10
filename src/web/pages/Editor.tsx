@@ -20,6 +20,7 @@ import {
   DocumentBody,
   type Mutate,
 } from "../components/DocumentBody";
+import { downloadDocument } from "../download";
 
 type Saved = { document: Document; etag: string };
 type Comparison = {
@@ -127,16 +128,29 @@ export function NewPage() {
 export function Editor({ id, initial }: { id: string; initial?: Document }) {
   const data = useData(),
     navigate = useNavigate();
-  const [doc, setDoc] = useState<Document | null>(initial ?? null),
-    [saved, setSaved] = useState(initial ? "" : ""),
+  const local = data.mode === "local";
+  const published = !local
+    ? data.documents.find((d) => d.id === id)
+    : undefined;
+  const [doc, setDoc] = useState<Document | null>(initial ?? published ?? null),
+    [saved, setSaved] = useState(
+      !initial && published ? serialize(published) : "",
+    ),
     [etag, setEtag] = useState("");
+  const [downloaded, setDownloaded] = useState(false);
   const [comparison, setComparison] = useState<Comparison | null>(
-      initial ? { document: null, sha: null, label: "新規文書" } : null,
+      initial
+        ? { document: null, sha: null, label: "新規文書" }
+        : published
+          ? { document: published, sha: data.commit, label: "公開中の本文" }
+          : null,
     ),
     [base, setBase] = useState("main");
   const [past, setPast] = useState<Document[]>([]),
     [future, setFuture] = useState<Document[]>([]),
-    [error, setError] = useState(""),
+    [error, setError] = useState(
+      !local && !initial && !published ? "文書が見つかりません。" : "",
+    ),
     [notice, setNotice] = useState(""),
     [saving, setSaving] = useState(false),
     [table, setTable] = useState(false),
@@ -147,7 +161,7 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
   const isNew = !!initial,
     dirty = !!doc && serialize(doc) !== saved;
   useEffect(() => {
-    if (initial) return;
+    if (initial || !local) return;
     let alive = true;
     api<Saved>(`/api/documents/${id}`)
       .then((result) => {
@@ -162,9 +176,9 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
     return () => {
       alive = false;
     };
-  }, [id]);
+  }, [id, initial, local]);
   const loadComparison = async () => {
-    if (isNew) return;
+    if (isNew || !local) return;
     const result = await api<Comparison>(
       `/api/documents/${id}/comparison?base=${base}`,
     );
@@ -172,7 +186,7 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
   };
   useEffect(() => {
     let alive = true;
-    if (!isNew)
+    if (!isNew && local)
       api<Comparison>(`/api/documents/${id}/comparison?base=${base}`)
         .then((result) => {
           if (alive) setComparison(result);
@@ -183,7 +197,7 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
     return () => {
       alive = false;
     };
-  }, [id, base]);
+  }, [id, base, isNew, local]);
   useEffect(() => {
     if (!dirty) return;
     const unload = (e: BeforeUnloadEvent) => {
@@ -194,9 +208,14 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
       const a = (e.target as Element).closest("a");
       if (
         a &&
+        !a.hasAttribute("download") &&
         a.origin === location.origin &&
         a.pathname !== location.pathname &&
-        !confirm("未保存の変更があります。画面を移動しますか？")
+        !confirm(
+          local
+            ? "未保存の変更があります。画面を移動しますか？"
+            : "未ダウンロードの変更があります。画面を移動しますか？",
+        )
       ) {
         e.preventDefault();
         e.stopPropagation();
@@ -208,7 +227,7 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
       window.removeEventListener("beforeunload", unload);
       document.removeEventListener("click", links, true);
     };
-  }, [dirty]);
+  }, [dirty, local]);
   const mutate: Mutate = (fn) => {
     if (!doc || busy.current) return;
     const next = structuredClone(doc);
@@ -244,6 +263,13 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
     setError("");
     setNotice("");
     try {
+      if (!local) {
+        downloadDocument(doc);
+        setSaved(serialize(doc));
+        setDownloaded(true);
+        setNotice("JSONのダウンロードを開始しました。");
+        return;
+      }
       const result = await api<Saved>(
         isNew ? "/api/documents" : `/api/documents/${id}`,
         {
@@ -309,7 +335,15 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
         extra={
           <div className="heading-actions">
             <span className="save-state text-[12px] text-subtle">
-              {dirty ? "未保存の変更あり" : "保存済み"}
+              {local
+                ? dirty
+                  ? "未保存の変更あり"
+                  : "保存済み"
+                : dirty
+                  ? "未ダウンロードの変更あり"
+                  : downloaded
+                    ? "ダウンロード済み"
+                    : "変更なし"}
             </span>
             <button
               className="mobile-navigation"
@@ -347,7 +381,7 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
             saving || !dirty || problems.some((p) => p.level === "error")
           }
         >
-          {saving ? "保存中…" : "原本に保存"}
+          {local ? (saving ? "保存中…" : "原本に保存") : "JSONをダウンロード"}
         </button>
       </div>
       {error && (
@@ -387,33 +421,39 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
       >
         <aside className="editor-sidebar sidebar-pane">
           <section className="comparison-settings border-b border-divider px-3 py-2.25 text-[12px] [&_label]:flex [&_label]:items-center [&_label]:gap-2 [&_select]:w-32.5 [&_select]:flex-1 [&_select]:text-[12px] [&>div]:mt-1.25 [&>div]:flex [&>div]:items-center [&>div]:justify-between [&_code]:text-subtle">
-            <label>
-              比較元{" "}
-              <select
-                aria-label="差分の比較元"
-                disabled={isNew}
-                value={base}
-                onChange={(e) => setBase(e.target.value)}
-              >
-                <option value="main">mainとの分岐点</option>
-                <option value="HEAD">HEAD</option>
-              </select>
-            </label>
-            <div>
-              <code title={comparison?.label}>
-                {comparison?.sha?.slice(0, 8) ??
-                  (isNew ? "新規文書" : "読み込み中…")}
-              </code>
-              <button
-                className="text-button"
-                disabled={isNew}
-                onClick={() =>
-                  void loadComparison().catch((e) => setError(e.message))
-                }
-              >
-                更新
-              </button>
-            </div>
+            {local ? (
+              <>
+                <label>
+                  比較元{" "}
+                  <select
+                    aria-label="差分の比較元"
+                    disabled={isNew}
+                    value={base}
+                    onChange={(e) => setBase(e.target.value)}
+                  >
+                    <option value="main">mainとの分岐点</option>
+                    <option value="HEAD">HEAD</option>
+                  </select>
+                </label>
+                <div>
+                  <code title={comparison?.label}>
+                    {comparison?.sha?.slice(0, 8) ??
+                      (isNew ? "新規文書" : "読み込み中…")}
+                  </code>
+                  <button
+                    className="text-button"
+                    disabled={isNew}
+                    onClick={() =>
+                      void loadComparison().catch((e) => setError(e.message))
+                    }
+                  >
+                    更新
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p>比較元：{comparison?.label}</p>
+            )}
           </section>
           <div className="toc-pane min-h-0 flex-1 overflow-auto overscroll-contain p-2">
             <Contents
@@ -549,7 +589,11 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
                   role="status"
                 >
                   <p className="font-bold">未入力の項目があります</p>
-                  <p>空欄を埋めてから保存してください。</p>
+                  <p>
+                    {local
+                      ? "空欄を埋めてから保存してください。"
+                      : "空欄を埋めてからダウンロードしてください。"}
+                  </p>
                   <ul className="mt-1.5 list-disc space-y-1 pl-4 wrap-anywhere">
                     {problems
                       .filter((problem) => problem.code === "empty")

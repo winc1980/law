@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import type { Document } from "../../domain/model";
 import { useData } from "../App";
 import { api } from "../api";
+import { downloadDocument } from "../download";
 import type { Revision } from "../types";
 
 export function useRevisions(id: string) {
@@ -90,20 +91,7 @@ export function RevisionList({
 
 export function DownloadButton({ document: doc }: { document: Document }) {
   return (
-    <button
-      className="text-button"
-      onClick={() => {
-        const blob = new Blob([JSON.stringify(doc, null, 2) + "\n"], {
-          type: "application/json;charset=utf-8",
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${doc.id}.json`;
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      }}
-    >
+    <button className="text-button" onClick={() => downloadDocument(doc)}>
       ダウンロード
     </button>
   );

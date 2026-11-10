@@ -1,13 +1,18 @@
 import { expect, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
+
+import { articles, serialize } from "../../src/domain/model";
+import { validate } from "../../src/domain/validation";
+
+const base = process.env.LAW_BASE_PATH ?? "/";
+const publicURL = (path: string) => `http://127.0.0.1:3108${base}${path}`;
 
 test("公開HTMLはJSなしで直接閲覧でき、編集APIを含まない", async ({
   browser,
 }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
-  await page.goto(
-    "http://127.0.0.1:3108/law/laws/constitution/#art-member-duties",
-  );
+  await page.goto(publicURL("laws/constitution/#art-member-duties"));
   await expect(
     page.getByRole("heading", {
       name: "コンピュータ研究会・WINC会則",
@@ -18,7 +23,7 @@ test("公開HTMLはJSなしで直接閲覧でき、編集APIを含まない", as
   await expect(page.locator("#art-member-duties")).toBeVisible();
   await expect(
     page.getByRole("link", { name: "編集する", exact: true }),
-  ).toHaveCount(0);
+  ).toHaveAttribute("href", `${base}edit/constitution/`);
   expect(await page.content()).not.toContain("X-Law-Token");
   await context.close();
 });
@@ -26,9 +31,9 @@ test("公開HTMLはJSなしで直接閲覧でき、編集APIを含まない", as
 test("公開ページのbase path・hydration・Git履歴が動く", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("http://127.0.0.1:3108/law/laws/constitution/");
+  await page.goto(publicURL("laws/constitution/"));
   await page.getByRole("link", { name: "変更履歴", exact: true }).click();
-  await expect(page).toHaveURL(/\/law\/history\/constitution\//);
+  await expect(page).toHaveURL(publicURL("history/constitution/"));
   const revisions = await page.evaluate(
     () => window.__LAW_DATA__.histories?.constitution ?? [],
   );
@@ -68,5 +73,119 @@ test("公開ページのbase path・hydration・Git履歴が動く", async ({ pa
     await expect(page.locator("#art-amendment")).toBeVisible();
   await page.reload();
   await expect(body).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test("公開ページで編集したJSONをダウンロードでき、公開中の本文は変わらない", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  const apiRequests: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname.startsWith("/api/"))
+      apiRequests.push(request.url());
+  });
+  await page.goto(publicURL("laws/constitution/"));
+  const original = await page.evaluate(() => window.__LAW_DATA__.documents[0]!);
+  await page.getByRole("link", { name: "編集する", exact: true }).click();
+  await expect(page).toHaveURL(publicURL("edit/constitution/"));
+  const text = page.getByRole("textbox", {
+    name: "第一条 第1項の本文",
+    exact: true,
+  });
+  const body = await text.inputValue();
+  await text.fill(body + "公開版の編集テスト。");
+  await page.getByRole("button", { name: "元に戻す", exact: true }).click();
+  await expect(text).toHaveValue(body);
+  await page.getByRole("button", { name: "やり直す", exact: true }).click();
+  await expect(text).toHaveValue(body + "公開版の編集テスト。");
+  const downloadButton = page.getByRole("button", {
+    name: "JSONをダウンロード",
+    exact: true,
+  });
+  const pendingDownload = page.waitForEvent("download");
+  await downloadButton.click();
+  const download = await pendingDownload;
+  expect(download.suggestedFilename()).toBe("constitution.json");
+  const downloaded = await readFile((await download.path())!, "utf8");
+  const expected = structuredClone(original);
+  articles(expected)[0].paragraphs[0].text = body + "公開版の編集テスト。";
+  expect(downloaded).toBe(serialize(expected));
+  expect(validate(JSON.parse(downloaded))).toEqual([]);
+  await expect(
+    page.getByText("ダウンロード済み", { exact: true }),
+  ).toBeVisible();
+  await expect(downloadButton).toBeDisabled();
+  await expect(page.locator(".changes")).toContainText("公開版の編集テスト");
+  await page.getByRole("button", { name: "新旧対照表", exact: true }).click();
+  await expect(page.getByRole("table", { name: "新旧対照表" })).toContainText(
+    "公開版の編集テスト",
+  );
+  await page.getByRole("link", { name: "閲覧に戻る", exact: true }).click();
+  await expect(page.locator("#art-name")).not.toContainText(
+    "公開版の編集テスト",
+  );
+  expect(await page.evaluate(() => window.__LAW_DATA__.documents[0])).toEqual(
+    original,
+  );
+  await page.goto(publicURL("edit/constitution/"));
+  await expect(text).toHaveValue(body);
+  expect(apiRequests).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test("公開ページで新規作成し、入力の検証後にショートカットでもダウンロードできる", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  const downloads: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("download", (download) =>
+    downloads.push(download.suggestedFilename()),
+  );
+  await page.goto(publicURL("new/"));
+  await page.getByLabel("文書ID", { exact: true }).fill("public-notice");
+  await page.getByLabel("題名", { exact: true }).fill("公開版の新規公示");
+  await page.getByLabel("種別", { exact: true }).selectOption("執行部公示");
+  await page.getByRole("radio", { name: /単一の文字列/ }).check();
+  await page.getByRole("button", { name: "本文の編集へ", exact: true }).click();
+  const downloadButton = page.getByRole("button", {
+    name: "JSONをダウンロード",
+    exact: true,
+  });
+  await expect(downloadButton).toBeDisabled();
+  await expect(page.locator(".diagnostics")).toContainText(
+    "本文を入力してください。",
+  );
+  await page.keyboard.press("ControlOrMeta+s");
+  await page
+    .getByRole("textbox", { name: "本文", exact: true })
+    .fill("公示本文です。\n改行も保持します。");
+  await expect(downloadButton).toBeEnabled();
+  const pendingDownload = page.waitForEvent("download");
+  await page.keyboard.press("ControlOrMeta+s");
+  const download = await pendingDownload;
+  const downloaded = JSON.parse(
+    await readFile((await download.path())!, "utf8"),
+  );
+  expect(downloaded).toMatchObject({
+    id: "public-notice",
+    title: "公開版の新規公示",
+    kind: "執行部公示",
+    body: "公示本文です。\n改行も保持します。",
+  });
+  expect(validate(downloaded)).toEqual([]);
+  expect(downloads).toEqual(["public-notice.json"]);
+  await expect(
+    page.getByText("ダウンロード済み", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("textbox", { name: "本文", exact: true })
+    .fill("再編集した本文です。");
+  await expect(
+    page.getByText("未ダウンロードの変更あり", { exact: true }),
+  ).toBeVisible();
+  await expect(downloadButton).toBeEnabled();
   expect(errors).toEqual([]);
 });

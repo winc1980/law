@@ -14,7 +14,7 @@ import type { Bootstrap } from "../src/web/types";
 const output = resolve(Bun.env.LAW_OUTDIR ?? join(root, "dist"));
 if (output === root || root.startsWith(`${output}/`))
   throw new Error("出力先が不正です。");
-const configuredBase = Bun.env.LAW_BASE_PATH ?? "/law/";
+const configuredBase = Bun.env.LAW_BASE_PATH ?? "/";
 if (!/^\/(?:[a-zA-Z0-9_-]+\/)*$/.test(configuredBase))
   throw new Error(
     "LAW_BASE_PATHは / または /law/ のようなパスを指定してください。",
@@ -101,15 +101,14 @@ await page("", "規則・決定");
 for (const doc of documents) {
   await page(`laws/${doc.id}/`, doc.title);
   await page(`history/${doc.id}/`, `${doc.title}の変更履歴`);
-  await page(`edit/${doc.id}/`, "ローカルで編集する");
+  await page(`edit/${doc.id}/`, `${doc.title}を編集する`);
 }
-await page("new/", "ローカルで編集する");
+await page("new/", "新規作成");
 await page("404/", "見つかりません");
 await Bun.write(
   join(output, "404.html"),
   await Bun.file(join(output, "404/index.html")).text(),
 );
-await Bun.write(join(output, ".nojekyll"), "");
 console.log(
   `静的サイトを生成しました: ${output}（${documents.length}文書、base=${base}）`,
 );
