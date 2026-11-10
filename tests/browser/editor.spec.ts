@@ -60,9 +60,14 @@ test("単一文字列の公示を新規作成・保存する", async ({ page }) 
   await page.getByLabel("種別", { exact: true }).selectOption("執行部公示");
   await page.getByRole("radio", { name: /単一の文字列/ }).check();
   await page.getByRole("button", { name: "本文の編集へ" }).click();
+  await expect(page.locator(".diagnostics li")).toHaveText([
+    "本文を入力してください。",
+  ]);
+  await expect(page.getByRole("button", { name: "原本に保存" })).toBeDisabled();
   await page
     .getByRole("textbox", { name: "本文", exact: true })
     .fill("公示の本文です。\n改行も保持します。");
+  await expect(page.locator(".diagnostics")).toBeEmpty();
   await page.getByRole("button", { name: "原本に保存" }).click();
   await expect(page).toHaveURL(/\/edit\/test-notice\//);
   await expect(page.getByText("保存済み", { exact: true })).toBeVisible();
@@ -70,6 +75,29 @@ test("単一文字列の公示を新規作成・保存する", async ({ page }) 
   await expect(page.locator(".plain-body")).toHaveText(
     "公示の本文です。\n改行も保持します。",
   );
+});
+
+test("新規の規則の空欄を日本語で案内し、入力後に解除する", async ({ page }) => {
+  await page.goto("/new/");
+  await page.getByLabel("文書ID", { exact: true }).fill("empty-field-rules");
+  await page.getByLabel("題名", { exact: true }).fill("空欄テスト規則");
+  await page.getByRole("button", { name: "本文の編集へ" }).click();
+  const diagnostics = page.locator(".diagnostics");
+  await expect(diagnostics).toContainText("未入力の項目があります");
+  await expect(diagnostics.locator("li")).toHaveText([
+    "第一条 第1項の本文を入力してください。",
+  ]);
+  await expect(diagnostics.locator(".diagnostic")).toHaveCount(1);
+  await expect(diagnostics).not.toContainText("/body");
+  await expect(diagnostics).not.toContainText("must");
+  const save = page.getByRole("button", { name: "原本に保存" });
+  await expect(save).toBeDisabled();
+  await page.screenshot({ path: "test-results/editor-empty-fields.png" });
+  await page
+    .getByRole("textbox", { name: "第一条 第1項の本文", exact: true })
+    .fill("規則の本文です。");
+  await expect(diagnostics).toBeEmpty();
+  await expect(save).toBeEnabled();
 });
 
 test("狭い画面で本文と差分を切り替える", async ({ page }) => {

@@ -12,6 +12,21 @@ import { root } from "../src/server/repository";
 
 // ステージした原本だけを対象とする。部分ステージ中のファイルを勝手に全体ステージしない。
 export async function prepareCommit(cwd = root) {
+  // 改名を削除・追加として扱い、data/との境界をまたぐ移動も検出する。
+  const staged = await git(
+    ["diff", "--cached", "--name-only", "--no-renames", "-z"],
+    cwd,
+  );
+  if (staged === null) throw new Error("Gitのステージを読み取れません。");
+  const paths = staged.split("\0").filter(Boolean);
+  if (
+    paths.some((path) => path.startsWith("data/")) &&
+    paths.some((path) => !path.startsWith("data/"))
+  )
+    throw new Error(
+      "規則の変更（data/配下）とWebシステムの変更（data/以外）は同じコミットに含められません。git restore --staged -- <パス> で片方をステージから外し、別々にコミットしてください。",
+    );
+
   const names = await git(
     [
       "diff",

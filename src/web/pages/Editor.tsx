@@ -543,14 +543,32 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
           <aside className="diff-panel min-h-0 min-w-0 overflow-auto border-l border-border text-[12px] [&_h2]:sticky [&_h2]:top-0 [&_h2]:z-1 [&_h2]:border-b [&_h2]:border-faint [&_h2]:bg-white [&_h2]:px-3 [&_h2]:py-2 [&_h2]:text-[13px] max-md:border-l-0 max-md:in-[.tab-body]:hidden print:hidden">
             <h2>差分・検証</h2>
             <div className="diagnostics empty:hidden">
-              {problems.map((problem, i) => (
-                <p
-                  className="diagnostic mx-2.5 my-2 border-l-2 px-2 py-1.5 wrap-anywhere error bg-error-bg text-error"
-                  key={i}
+              {problems.some((problem) => problem.code === "empty") && (
+                <div
+                  className="diagnostic mx-2.5 my-2 border-l-2 bg-error-bg px-2 py-1.5 text-error"
+                  role="status"
                 >
-                  {problem.path}: {problem.message}
-                </p>
-              ))}
+                  <p className="font-bold">未入力の項目があります</p>
+                  <p>空欄を埋めてから保存してください。</p>
+                  <ul className="mt-1.5 list-disc space-y-1 pl-4 wrap-anywhere">
+                    {problems
+                      .filter((problem) => problem.code === "empty")
+                      .map((problem) => (
+                        <li key={problem.path}>{problem.message}</li>
+                      ))}
+                  </ul>
+                </div>
+              )}
+              {problems
+                .filter((problem) => problem.code !== "empty")
+                .map((problem, i) => (
+                  <p
+                    className="diagnostic mx-2.5 my-2 border-l-2 px-2 py-1.5 wrap-anywhere error bg-error-bg text-error"
+                    key={i}
+                  >
+                    {problem.path}: {problem.message}
+                  </p>
+                ))}
               {warnings.map((warning, i) => (
                 <p
                   className="diagnostic mx-2.5 my-2 border-l-2 px-2 py-1.5 wrap-anywhere warning bg-warning-bg text-warning"

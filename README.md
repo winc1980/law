@@ -31,7 +31,9 @@ git push -u origin update-rules
 
 その後GitHubでPRを作成します。コミット・push・PR作成はWeb画面では行いません。今回の再構築でGitHub認証やPR作成APIは削除しています。
 
-`bun run commit`は、このコミットに限って`.githooks/pre-commit`を有効にします。UUIDのない新規要素にUUIDを付与し、ステージ済み原本を検証してからコミットします。通常の`git commit`でも有効にする場合は、クローンごとに次を実行してください。
+`bun run commit`は、このコミットに限って`.githooks/pre-commit`を有効にします。規則の変更（`data/`配下）とWebシステムの変更（`data/`以外のコード・設定・ドキュメント等）が同時にステージされている場合は、コミットを拒否します。追加・変更・削除・移動が対象で、未ステージの変更は判定に含めません。混在した場合は`git restore --staged -- <パス>`で片方をステージから外し、別々にコミットしてください。
+
+チェックを通過すると、UUIDのない新規要素にUUIDを付与し、ステージ済み原本を検証してからコミットします。通常の`git commit`でも有効にする場合は、クローンごとに次を実行してください。
 
 ```sh
 bun run hooks:install
@@ -96,7 +98,7 @@ scripts/               Bunで実行する検証・生成・移行・コミット
 tests/unit/            原本・差分・保存API・コミット前処理
 tests/browser/         実ブラウザによる閲覧・編集・保存・履歴
 docs/                  設計
-.githooks/             コミット前のUUID補完と検証
+.githooks/             コミット前の変更混在チェック・UUID補完・検証
 ```
 
 画面固有の配置はTSXのTailwindユーティリティで指定します。`src/web/styles/app.css`の`@theme`に共通の色・フォント・画面幅、`@utility`に共通レイアウト、`@layer components`にボタン・目次・条文・比較表の共通スタイルを定義しています。モバイル表示と印刷には`max-md:`や`print:`を使います。

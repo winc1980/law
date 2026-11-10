@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 import { prepareCommit } from "../../scripts/prepare-commit";
 import { nodes, serialize } from "../../src/domain/model";
@@ -62,6 +62,90 @@ test("UUID未付与の部分ステージは変更せずに停止する", async (
     ).toBeUndefined();
     expect((await Bun.file(join(dir, "data/sample.json")).json()).title).toBe(
       "未ステージ",
+    );
+  }));
+
+test("原本とシステムの混在はUUID補完前に拒否し、ステージと作業ツリーを保持する", async () =>
+  withGit(async (dir) => {
+    const doc = fixture();
+    delete doc.uuid;
+    const text = serialize(doc);
+    await Bun.write(join(dir, "data/sample.json"), text);
+    await Bun.write(join(dir, "src/web/example.ts"), "export {};\n");
+    await git(["add", "."], dir);
+    const before = await git(["write-tree"], dir);
+
+    await expect(prepareCommit(dir)).rejects.toThrow("別々にコミット");
+
+    expect(await git(["write-tree"], dir)).toBe(before);
+    expect(await Bun.file(join(dir, "data/sample.json")).text()).toBe(text);
+  }));
+
+test.each(["src/web/example.ts", "schema/example.json", "README.md"])(
+  "原本の削除とdata/以外の変更（%s）の混在も拒否する",
+  async (path) =>
+    withGit(async (dir) => {
+      await Bun.write(join(dir, "data/sample.json"), serialize(fixture()));
+      await Bun.write(join(dir, path), "before\n");
+      await git(["add", "."], dir);
+      await git(["commit", "-m", "initial"], dir);
+      await git(["rm", "data/sample.json"], dir);
+      await Bun.write(join(dir, path), "after\n");
+      await git(["add", path], dir);
+
+      await expect(prepareCommit(dir)).rejects.toThrow("同じコミット");
+    }),
+);
+
+test.each([
+  ["data/sample.json", "sample.json"],
+  ["sample.json", "data/sample.json"],
+])("data/との境界をまたぐ移動（%s → %s）も拒否する", async (from, to) =>
+  withGit(async (dir) => {
+    await Bun.write(join(dir, from), serialize(fixture()));
+    await git(["add", "."], dir);
+    await git(["commit", "-m", "initial"], dir);
+    await mkdir(dirname(join(dir, to)), { recursive: true });
+    expect(await git(["mv", from, to], dir)).not.toBeNull();
+
+    await expect(prepareCommit(dir)).rejects.toThrow("同じコミット");
+  }),
+);
+
+test.each(["data/sample.json", "src/web/example.ts"])(
+  "片方だけのステージ（%s）は未ステージの変更があっても許可する",
+  async (path) =>
+    withGit(async (dir) => {
+      await Bun.write(join(dir, "data/sample.json"), serialize(fixture()));
+      await Bun.write(join(dir, "src/web/example.ts"), "export {};\n");
+      await git(["add", "."], dir);
+      await git(["commit", "-m", "initial"], dir);
+      await Bun.write(
+        join(dir, "data/sample.json"),
+        serialize({ ...fixture(), title: "変更後" }),
+      );
+      await Bun.write(join(dir, "src/web/example.ts"), "export const n = 1;\n");
+      await git(["add", path], dir);
+      const before = await git(["write-tree"], dir);
+
+      await prepareCommit(dir);
+
+      expect(await git(["write-tree"], dir)).toBe(before);
+      expect(await git(["diff", "--cached", "--name-only"], dir)).toBe(path);
+    }),
+);
+
+test("原本の削除だけのステージは許可する", async () =>
+  withGit(async (dir) => {
+    await Bun.write(join(dir, "data/sample.json"), serialize(fixture()));
+    await git(["add", "."], dir);
+    await git(["commit", "-m", "initial"], dir);
+    await git(["rm", "data/sample.json"], dir);
+
+    await prepareCommit(dir);
+
+    expect(await git(["diff", "--cached", "--name-status"], dir)).toBe(
+      "D\tdata/sample.json",
     );
   }));
 
