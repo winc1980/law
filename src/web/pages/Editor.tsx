@@ -812,7 +812,8 @@ export function Editor({
                     className="diagnostic mx-2.5 my-2 border-l-2 px-2 py-1.5 wrap-anywhere error bg-error-bg text-error"
                     key={i}
                   >
-                    {problem.path}: {problem.message}
+                    {problem.code !== "empty-chapter" && `${problem.path}: `}
+                    {problem.message}
                   </p>
                 ))}
               {warnings.map((warning, i) => (

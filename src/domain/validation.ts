@@ -10,10 +10,10 @@ export type Problem = {
   level: "error" | "warning";
   path: string;
   message: string;
-  code?: "empty";
+  code?: "empty" | "empty-chapter";
 };
 
-function fieldLabel(input: unknown, path: string): string {
+function nodeLabel(input: unknown, path: string): string {
   const parts = path.split("/").slice(1);
   const labels: string[] = [];
   let value = input;
@@ -50,8 +50,12 @@ function fieldLabel(input: unknown, path: string): string {
       );
     }
   }
-  const field = parts.at(-1);
-  const label = labels.join(" ");
+  return labels.join(" ");
+}
+
+function fieldLabel(input: unknown, path: string): string {
+  const field = path.split("/").at(-1);
+  const label = nodeLabel(input, path);
   if (!label) return field === "title" ? "題名" : "本文";
   return `${label}の${field === "name" ? "名称" : field === "title" ? "題名" : "本文"}`;
 }
@@ -98,6 +102,19 @@ function schemaProblems(input: unknown, errors: ErrorObject[]): Problem[] {
     if (seen.has(key)) return [];
     seen.add(key);
     const path = error.instancePath || "/";
+    if (
+      error.keyword === "minItems" &&
+      error.params.limit === 1 &&
+      /^\/body\/chapters\/\d+\/articles$/.test(path)
+    )
+      return [
+        {
+          level: "error",
+          path,
+          code: "empty-chapter",
+          message: `${nodeLabel(input, path.slice(0, -"/articles".length))}に条文がありません。この章の「条を追加」で条文を追加するか、不要な章は「章を削除」で削除してください。`,
+        },
+      ];
     if (error.keyword === "minLength" && error.params.limit === 1)
       return [
         {

@@ -103,3 +103,45 @@ describe("空欄の検証メッセージ", () => {
     });
   });
 });
+
+describe("条文がない章の検証メッセージ", () => {
+  test("条文がない章ごとに、章名と解消方法を重複なく案内する", () => {
+    const doc = newDocument("rules", "会則", "会則", false);
+    doc.body = {
+      chapters: [
+        { name: "第一章", title: "総則", articles: [] },
+        { name: "第二章", title: "会員", articles: [] },
+      ],
+    };
+    expect(validate(doc, false)).toEqual(
+      ["第一章", "第二章"].map((name, i) => ({
+        level: "error",
+        path: `/body/chapters/${i}/articles`,
+        code: "empty-chapter",
+        message: `${name}に条文がありません。この章の「条を追加」で条文を追加するか、不要な章は「章を削除」で削除してください。`,
+      })),
+    );
+  });
+
+  test("章名が未入力でも位置で案内し、ほかの入力エラーも残す", () => {
+    const doc = newDocument("rules", "会則", "会則", false);
+    doc.body = {
+      chapters: [{ name: "", title: "総則", articles: [] }],
+    };
+    expect(validate(doc, false)).toEqual([
+      {
+        level: "error",
+        path: "/body/chapters/0/name",
+        code: "empty",
+        message: "1番目の章の名称を入力してください。",
+      },
+      {
+        level: "error",
+        path: "/body/chapters/0/articles",
+        code: "empty-chapter",
+        message:
+          "1番目の章に条文がありません。この章の「条を追加」で条文を追加するか、不要な章は「章を削除」で削除してください。",
+      },
+    ]);
+  });
+});

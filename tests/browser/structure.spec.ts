@@ -1,5 +1,42 @@
 import { expect, test } from "@playwright/test";
 
+test("章の最後の条を削除すると日本語で解消方法を案内する", async ({ page }) => {
+  await page.goto("/edit/constitution/");
+  const chapter = page.locator("#ch-name");
+  await chapter
+    .getByRole("textbox", { name: "第一条 第1項の本文", exact: true })
+    .click();
+  await chapter.getByRole("button", { name: "条を削除", exact: true }).click();
+
+  const diagnostics = page.locator(".diagnostics");
+  await expect(diagnostics.locator(".error")).toHaveText([
+    "第一章に条文がありません。この章の「条を追加」で条文を追加するか、不要な章は「章を削除」で削除してください。",
+  ]);
+  await expect(diagnostics).not.toContainText("/body");
+  await expect(diagnostics).not.toContainText("must");
+  const save = page.getByRole("button", { name: "原本に保存", exact: true });
+  await expect(save).toBeDisabled();
+
+  await chapter
+    .getByRole("textbox", { name: "第一章の名称", exact: true })
+    .click();
+  await chapter.getByRole("button", { name: "条を追加", exact: true }).click();
+  await chapter
+    .getByRole("textbox", { name: "新しい条 第1項の本文", exact: true })
+    .fill("追加した条の本文。");
+  await expect(diagnostics.locator(".error")).toHaveCount(0);
+  await expect(save).toBeEnabled();
+
+  await chapter.getByRole("button", { name: "条を削除", exact: true }).click();
+  await expect(diagnostics.locator(".error")).toHaveCount(1);
+  await chapter
+    .getByRole("textbox", { name: "第一章の名称", exact: true })
+    .click();
+  await chapter.getByRole("button", { name: "章を削除", exact: true }).click();
+  await expect(diagnostics.locator(".error")).toHaveCount(0);
+  await expect(save).toBeEnabled();
+});
+
 test("条・項・号をボタンで追加・削除し、Undoと保存に反映する", async ({
   page,
 }) => {
