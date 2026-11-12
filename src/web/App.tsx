@@ -68,6 +68,9 @@ export function App({ data }: { data: Bootstrap }) {
         <nav aria-label="メインメニュー" className="flex gap-4.5 max-md:gap-3">
           <Link to="/">文書一覧</Link>
           <Link to="/new/">新規作成</Link>
+          {data.mode === "public" && (
+            <Link to="/new/?import=1">JSONから編集</Link>
+          )}
         </nav>
         {data.mode === "local" && (
           <span className="mode-label ml-auto text-subtle">ローカル</span>

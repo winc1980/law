@@ -1,5 +1,74 @@
 import { expect, test } from "@playwright/test";
 
+import { articles } from "../../src/domain/model";
+
+test("ローカルでも未保存の編集を復元し、原本への保存後は下書きを消す", async ({
+  page,
+}) => {
+  await page.goto("/edit/constitution/");
+  const text = page.getByRole("textbox", {
+    name: "第一条 第1項の本文",
+    exact: true,
+  });
+  await text.waitFor();
+  const original = await text.inputValue();
+  await text.fill(original + "自動保存テスト。");
+  await expect(
+    page.getByText("ブラウザに自動保存済み", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(text).toHaveValue(original + "自動保存テスト。");
+  const result = await (
+    await page.request.get("/api/documents/constitution")
+  ).json();
+  expect(articles(result.document)[0].paragraphs[0].text).toBe(original);
+  await page.getByRole("button", { name: "原本に保存", exact: true }).click();
+  await expect(page.getByText("保存済み", { exact: true })).toBeVisible();
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem("law:draft:v1:local:/:edit:constitution"),
+    ),
+  ).toBeNull();
+  await page.reload();
+  await expect(text).toHaveValue(original + "自動保存テスト。");
+  await expect(page.getByText("保存済み", { exact: true })).toBeVisible();
+});
+
+test("下書きの復元時に原本が更新されていたら上書きを拒否する", async ({
+  page,
+}) => {
+  await page.goto("/edit/constitution/");
+  const text = page.getByRole("textbox", {
+    name: "第一条 第1項の本文",
+    exact: true,
+  });
+  await text.fill("ブラウザに残した下書き。");
+  const source = await (
+    await page.request.get("/api/documents/constitution")
+  ).json();
+  const session = await (await page.request.get("/api/session")).json();
+  articles(source.document)[0].paragraphs[0].text =
+    "別の編集者による原本の変更。";
+  const updated = await page.request.put("/api/documents/constitution", {
+    data: source.document,
+    headers: { "X-Law-Token": session.csrf, "If-Match": source.etag },
+  });
+  expect(updated.ok()).toBe(true);
+  await page.reload();
+  await expect(text).toHaveValue("ブラウザに残した下書き。");
+  await expect(page.getByRole("alert")).toContainText("原本が更新されています");
+  await page.getByRole("button", { name: "原本に保存", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "原本が外部で変更されました",
+  );
+  const current = await (
+    await page.request.get("/api/documents/constitution")
+  ).json();
+  expect(articles(current.document)[0].paragraphs[0].text).toBe(
+    "別の編集者による原本の変更。",
+  );
+});
+
 test("閲覧・IME編集・Undo/Redo・保存後の差分と履歴", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -64,6 +133,13 @@ test("単一文字列の公示を新規作成・保存する", async ({ page }) 
     "本文を入力してください。",
   ]);
   await expect(page.getByRole("button", { name: "原本に保存" })).toBeDisabled();
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "テスト公示", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("textbox", { name: "本文", exact: true }),
+  ).toHaveValue("");
   await page
     .getByRole("textbox", { name: "本文", exact: true })
     .fill("公示の本文です。\n改行も保持します。");
@@ -75,6 +151,8 @@ test("単一文字列の公示を新規作成・保存する", async ({ page }) 
   await expect(page.locator(".plain-body")).toHaveText(
     "公示の本文です。\n改行も保持します。",
   );
+  await page.getByRole("link", { name: "新規作成", exact: true }).click();
+  await expect(page.getByLabel("文書ID", { exact: true })).toBeVisible();
 });
 
 test("新規の規則の空欄を日本語で案内し、入力後に解除する", async ({ page }) => {

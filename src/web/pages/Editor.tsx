@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 
 import {
   type Document,
@@ -9,6 +9,7 @@ import {
   kinds,
   newDocument,
   serialize,
+  withUUIDs,
 } from "../../domain/model";
 import { referenceWarnings } from "../../domain/references";
 import { validate } from "../../domain/validation";
@@ -21,6 +22,7 @@ import {
   type Mutate,
 } from "../components/DocumentBody";
 import { downloadDocument } from "../download";
+import { type BrowserDraft, draftKey, readDraft, writeDraft } from "../drafts";
 
 type Saved = { document: Document; etag: string };
 type Comparison = {
@@ -33,12 +35,44 @@ export function EditPage() {
   return <Editor key={id} id={id!} />;
 }
 export function NewPage() {
+  const data = useData();
+  const navigate = useNavigate();
+  const [search, setSearch] = useSearchParams();
+  const importing = data.mode === "public" && search.has("import");
+  const fresh = search.has("fresh");
+  const key = draftKey(data);
   const [id, setId] = useState(""),
     [title, setTitle] = useState(""),
     [kind, setKind] = useState<Document["kind"]>("運営規則"),
     [plain, setPlain] = useState(false),
     [draft, setDraft] = useState<Document | null>(null);
-  if (draft) return <Editor initial={draft} id={id} />;
+  const [restored, setRestored] = useState<BrowserDraft | null>(null);
+  const [storageError, setStorageError] = useState("");
+  const [importError, setImportError] = useState("");
+  useEffect(() => {
+    if (importing || fresh) {
+      setDraft(null);
+      setRestored(null);
+      setId("");
+      setTitle("");
+      setKind("運営規則");
+      setPlain(false);
+      setImportError("");
+      return;
+    }
+    if (draft) return;
+    try {
+      const stored = readDraft(key);
+      if (stored) {
+        setRestored(stored);
+        setDraft(stored.document);
+      }
+    } catch {
+      setStorageError("ブラウザに保存した下書きを復元できませんでした。");
+    }
+  }, [key, importing, fresh]);
+  if (draft)
+    return <Editor initial={draft} restored={restored} id={draft.id} />;
   return (
     <main id="main" className="new-page content-page">
       <div className="breadcrumb mb-2.5 flex gap-2.25 text-[12px]">
@@ -46,12 +80,78 @@ export function NewPage() {
         <span>›</span>
         <span>新規作成</span>
       </div>
-      <h1>新規作成</h1>
+      <h1>{importing ? "JSONから編集を再開" : "新規作成"}</h1>
+      {storageError && (
+        <p className="error-box" role="alert">
+          {storageError}
+        </p>
+      )}
+      {data.mode === "public" && (
+        <section className="my-4 text-[13px]">
+          <p>編集済みのJSONを読み込んで、編集を続けられます。</p>
+          <label>
+            編集済みJSON
+            <input
+              type="file"
+              accept=".json,application/json"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file) return;
+                setImportError("");
+                try {
+                  const input: unknown = JSON.parse(await file.text());
+                  const problems = validate(input, false);
+                  if (problems.some((p) => p.level === "error")) {
+                    setImportError(
+                      `JSONを読み込めません。${problems.map((p) => `${p.path}: ${p.message}`).join("\n")}`,
+                    );
+                    return;
+                  }
+                  const imported = withUUIDs(input as Document);
+                  const published = data.documents.find(
+                    (d) => d.id === imported.id,
+                  );
+                  if (published) {
+                    try {
+                      writeDraft(draftKey(data, imported.id), {
+                        version: 1,
+                        document: imported,
+                        saved: published,
+                        etag: "",
+                        downloaded: false,
+                      });
+                      navigate(`/edit/${imported.id}/`);
+                      return;
+                    } catch {
+                      // 保存が使えない場合も、読み込んだJSONの編集は続けられる。
+                    }
+                  }
+                  setRestored(null);
+                  setDraft(imported);
+                  setSearch({}, { replace: true });
+                } catch {
+                  setImportError(
+                    "JSONを読み込めません。文書形式のJSONファイルを選択してください。",
+                  );
+                }
+              }}
+            />
+          </label>
+          {importError && (
+            <p className="error-box whitespace-pre-wrap" role="alert">
+              {importError}
+            </p>
+          )}
+        </section>
+      )}
       <form
         className="new-form"
         onSubmit={(e) => {
           e.preventDefault();
+          setRestored(null);
           setDraft(newDocument(id, title, kind, plain));
+          setSearch({}, { replace: true });
         }}
       >
         <label>
@@ -125,24 +225,31 @@ export function NewPage() {
   );
 }
 
-export function Editor({ id, initial }: { id: string; initial?: Document }) {
+export function Editor({
+  id,
+  initial,
+  restored,
+}: {
+  id: string;
+  initial?: Document;
+  restored?: BrowserDraft | null;
+}) {
   const data = useData(),
     navigate = useNavigate();
   const local = data.mode === "local";
+  const storageKey = draftKey(data, initial ? undefined : id);
   const published = !local
     ? data.documents.find((d) => d.id === id)
     : undefined;
   const [doc, setDoc] = useState<Document | null>(initial ?? published ?? null),
-    [saved, setSaved] = useState(
-      !initial && published ? serialize(published) : "",
-    ),
+    [saved, setSaved] = useState(published ? serialize(published) : ""),
     [etag, setEtag] = useState("");
   const [downloaded, setDownloaded] = useState(false);
   const [comparison, setComparison] = useState<Comparison | null>(
-      initial
-        ? { document: null, sha: null, label: "新規文書" }
-        : published
-          ? { document: published, sha: data.commit, label: "公開中の本文" }
+      published
+        ? { document: published, sha: data.commit, label: "公開中の本文" }
+        : initial
+          ? { document: null, sha: null, label: "新規文書" }
           : null,
     ),
     [base, setBase] = useState("main");
@@ -158,25 +265,100 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
   const [sidebarOpen, setSidebarOpen] = useState(false),
     [onlyChanges, setOnlyChanges] = useState(false);
   const busy = useRef(false);
+  const [draftReady, setDraftReady] = useState(false);
+  const [storageError, setStorageError] = useState("");
   const isNew = !!initial,
     dirty = !!doc && serialize(doc) !== saved;
   useEffect(() => {
-    if (initial || !local) return;
     let alive = true;
-    api<Saved>(`/api/documents/${id}`)
-      .then((result) => {
+    const load = async () => {
+      let stored: BrowserDraft | null = null;
+      try {
+        stored = initial ? (restored ?? null) : readDraft(storageKey);
+        if (stored && stored.document.id !== id)
+          throw new Error("文書IDが一致しません。");
+      } catch {
+        stored = null;
+        setStorageError("ブラウザに保存した下書きを復元できませんでした。");
+      }
+      try {
+        const result =
+          !initial && local ? await api<Saved>(`/api/documents/${id}`) : null;
         if (!alive) return;
-        setDoc(result.document);
-        setSaved(serialize(result.document));
-        setEtag(result.etag);
-      })
-      .catch((e) => {
-        if (alive) setError(e.message);
-      });
+        if (result) {
+          setDoc(result.document);
+          setSaved(serialize(result.document));
+          setEtag(result.etag);
+        }
+        if (stored) {
+          setDoc(stored.document);
+          setDownloaded(stored.downloaded);
+          if (!local)
+            setSaved(
+              stored.downloaded && stored.saved
+                ? serialize(stored.saved)
+                : published
+                  ? serialize(published)
+                  : "",
+            );
+          if (
+            local &&
+            result &&
+            serialize(stored.document) !== serialize(result.document)
+          ) {
+            // 古い原本を元にした下書きで新しい原本を上書きしない。
+            setEtag(stored.etag);
+            if (stored.etag !== result.etag)
+              setError(
+                "下書きの保存後に原本が更新されています。原本を確認して変更を反映してください。",
+              );
+          }
+          setNotice("ブラウザに保存した下書きを復元しました。");
+        }
+        setDraftReady(true);
+      } catch (e) {
+        if (alive) setError((e as Error).message);
+      }
+    };
+    void load();
     return () => {
       alive = false;
     };
-  }, [id, initial, local]);
+  }, [id, initial, restored, local, storageKey]);
+  useEffect(() => {
+    if (!draftReady || !doc) return;
+    try {
+      writeDraft(
+        storageKey,
+        (local && !dirty) ||
+          (!initial && published && serialize(doc) === serialize(published))
+          ? null
+          : {
+              version: 1,
+              document: doc,
+              saved: saved ? JSON.parse(saved) : null,
+              etag,
+              downloaded,
+            },
+      );
+      setStorageError("");
+    } catch {
+      setStorageError(
+        "ブラウザへの自動保存に失敗しました。画面を閉じる前に原本へ保存するか、JSONを取得してください。",
+      );
+    }
+  }, [
+    doc,
+    saved,
+    etag,
+    downloaded,
+    dirty,
+    draftReady,
+    storageKey,
+    local,
+    initial,
+    published,
+  ]);
   const loadComparison = async () => {
     if (isNew || !local) return;
     const result = await api<Comparison>(
@@ -199,7 +381,7 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
     };
   }, [id, base, isNew, local]);
   useEffect(() => {
-    if (!dirty) return;
+    if (!dirty || (draftReady && !storageError)) return;
     const unload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = "";
@@ -227,7 +409,7 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
       window.removeEventListener("beforeunload", unload);
       document.removeEventListener("click", links, true);
     };
-  }, [dirty, local]);
+  }, [dirty, local, draftReady, storageError]);
   const mutate: Mutate = (fn) => {
     if (!doc || busy.current) return;
     const next = structuredClone(doc);
@@ -286,6 +468,13 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
       setEtag(result.etag);
       setNotice("保存しました。");
       if (isNew) {
+        try {
+          writeDraft(storageKey, null);
+        } catch {
+          setStorageError(
+            "原本は保存しましたが、ブラウザの下書きを削除できませんでした。",
+          );
+        }
         data.documents.push(result.document);
         navigate(`/edit/${id}/`, { replace: true });
       } else {
@@ -334,6 +523,11 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
         doc={doc}
         extra={
           <div className="heading-actions">
+            {draftReady && !storageError && (!local || dirty) && (
+              <span className="text-[12px] text-subtle">
+                ブラウザに自動保存済み
+              </span>
+            )}
             <span className="save-state text-[12px] text-subtle">
               {local
                 ? dirty
@@ -352,7 +546,10 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
             >
               目次
             </button>
-            <Link to={`/laws/${id}/`}>閲覧に戻る</Link>
+            {isNew && <Link to="/new/?fresh=1">別の文書を新規作成</Link>}
+            <Link to={isNew && !published ? "/" : `/laws/${id}/`}>
+              閲覧に戻る
+            </Link>
           </div>
         }
       />
@@ -384,6 +581,11 @@ export function Editor({ id, initial }: { id: string; initial?: Document }) {
           {local ? (saving ? "保存中…" : "原本に保存") : "JSONをダウンロード"}
         </button>
       </div>
+      {storageError && (
+        <p className="error-box" role="alert">
+          {storageError}
+        </p>
+      )}
       {error && (
         <div className="error-box" role="alert">
           {error}{" "}

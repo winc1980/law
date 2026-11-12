@@ -130,7 +130,12 @@ test("公開ページで編集したJSONをダウンロードでき、公開中�
     original,
   );
   await page.goto(publicURL("edit/constitution/"));
-  await expect(text).toHaveValue(body);
+  await expect(text).toHaveValue(body + "公開版の編集テスト。");
+  await expect(
+    page.getByText("ダウンロード済み", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(text).toHaveValue(body + "公開版の編集テスト。");
   expect(apiRequests).toEqual([]);
   expect(errors).toEqual([]);
 });
@@ -187,5 +192,145 @@ test("公開ページで新規作成し、入力の検証後にショートカ�
     page.getByText("未ダウンロードの変更あり", { exact: true }),
   ).toBeVisible();
   await expect(downloadButton).toBeEnabled();
+  await page.reload();
+  await expect(
+    page.getByRole("textbox", { name: "本文", exact: true }),
+  ).toHaveValue("再編集した本文です。");
+  await expect(downloadButton).toBeEnabled();
   expect(errors).toEqual([]);
+});
+
+test("公開ページで編集途中の空欄も別のタブで復元する", async ({ page }) => {
+  await page.goto(publicURL("edit/constitution/"));
+  const text = page.getByRole("textbox", {
+    name: "第一条 第1項の本文",
+    exact: true,
+  });
+  await text.fill("");
+  await expect(
+    page.getByText("ブラウザに自動保存済み", { exact: true }),
+  ).toBeVisible();
+  const next = await page.context().newPage();
+  await next.goto(publicURL("edit/constitution/"));
+  await expect(
+    next.getByRole("textbox", { name: "第一条 第1項の本文", exact: true }),
+  ).toHaveValue("");
+  await expect(
+    next.getByRole("button", { name: "JSONをダウンロード", exact: true }),
+  ).toBeDisabled();
+  await expect(next.locator(".diagnostics")).toContainText(
+    "本文を入力してください。",
+  );
+  await next.close();
+});
+
+test("公開ページでJSONを検証して読み込み、差分を確認しながら編集を続ける", async ({
+  page,
+}) => {
+  const apiRequests: string[] = [];
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname.startsWith("/api/"))
+      apiRequests.push(request.url());
+  });
+  await page.goto(publicURL(""));
+  const original = await page.evaluate(() => window.__LAW_DATA__.documents[0]!);
+  await page.getByRole("link", { name: "JSONから編集", exact: true }).click();
+  const upload = page.getByLabel("編集済みJSON", { exact: true });
+  for (const contents of ["{", JSON.stringify({ id: "invalid" })]) {
+    await upload.setInputFiles({
+      name: "invalid.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(contents),
+    });
+    await expect(page.getByRole("alert")).toContainText(
+      "JSONを読み込めません。",
+    );
+    await expect(upload).toBeVisible();
+  }
+  const edited = structuredClone(original);
+  articles(edited)[0].paragraphs[0].text = "アップロードから編集を再開。";
+  await upload.setInputFiles({
+    name: "renamed.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(serialize(edited)),
+  });
+  const text = page.getByRole("textbox", {
+    name: "第一条 第1項の本文",
+    exact: true,
+  });
+  await expect(text).toHaveValue("アップロードから編集を再開。");
+  await expect(page.locator(".changes")).toContainText("編集を再開");
+  await page.reload();
+  await expect(text).toHaveValue("アップロードから編集を再開。");
+  await text.fill("アップロード後に追加編集。");
+  const pending = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "JSONをダウンロード", exact: true })
+    .click();
+  const download = await pending;
+  expect(download.suggestedFilename()).toBe(`${original.id}.json`);
+  articles(edited)[0].paragraphs[0].text = "アップロード後に追加編集。";
+  expect(await readFile((await download.path())!, "utf8")).toBe(
+    serialize(edited),
+  );
+  await page.getByRole("link", { name: "閲覧に戻る", exact: true }).click();
+  expect(await page.evaluate(() => window.__LAW_DATA__.documents[0])).toEqual(
+    original,
+  );
+  expect(apiRequests).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test("公開ページで新規文書のJSONとUUIDなしのJSONも編集できる", async ({
+  page,
+}) => {
+  await page.goto(publicURL("new/?import=1"));
+  await page.getByLabel("編集済みJSON", { exact: true }).setInputFiles({
+    name: "notice.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({
+        schemaVersion: 1,
+        id: "imported-notice",
+        title: "読み込んだ公示",
+        kind: "執行部公示",
+        status: "active",
+        body: "新規の公示本文。",
+      }),
+    ),
+  });
+  const body = page.getByRole("textbox", { name: "本文", exact: true });
+  await expect(body).toHaveValue("新規の公示本文。");
+  await expect(page.locator(".diagnostics")).toBeEmpty();
+  await body.fill("");
+  await page.reload();
+  await expect(body).toHaveValue("");
+  await page
+    .getByRole("link", { name: "別の文書を新規作成", exact: true })
+    .click();
+  await expect(page.getByLabel("文書ID", { exact: true })).toBeVisible();
+});
+
+test("ブラウザの自動保存が使えなくても編集とダウンロードは継続できる", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Storage.prototype.setItem = () => {
+      throw new DOMException("Quota exceeded", "QuotaExceededError");
+    };
+  });
+  await page.goto(publicURL("edit/constitution/"));
+  await page
+    .getByRole("textbox", { name: "第一条 第1項の本文", exact: true })
+    .fill("保存容量不足時の本文。");
+  await expect(page.getByRole("alert")).toContainText(
+    "ブラウザへの自動保存に失敗しました。",
+  );
+  const pending = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "JSONをダウンロード", exact: true })
+    .click();
+  expect((await pending).suggestedFilename()).toBe("constitution.json");
 });
