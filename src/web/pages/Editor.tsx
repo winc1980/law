@@ -11,7 +11,10 @@ import {
   serialize,
   withUUIDs,
 } from "../../domain/model";
-import { referenceWarnings } from "../../domain/references";
+import {
+  referenceWarnings,
+  updateArticleReferences,
+} from "../../domain/references";
 import { validate } from "../../domain/validation";
 import { DocumentHeading, useData } from "../App";
 import { api } from "../api";
@@ -414,6 +417,7 @@ export function Editor({
     if (!doc || busy.current) return;
     const next = structuredClone(doc);
     fn(next);
+    updateArticleReferences(doc, next);
     if (serialize(next) === serialize(doc)) return;
     setPast((p) => [...p.slice(-99), doc]);
     setFuture([]);
@@ -754,7 +758,7 @@ export function Editor({
                   <details className="renumber-panel mt-4.5 text-[12px] [&_p]:my-1.25 [&_button]:text-[12px] print:hidden">
                     <summary>再採番</summary>
                     <p>
-                      本則を第一条から振り直します。本文中の参照は変更しません。
+                      本則を第一条から振り直し、本文中の参照も同じ条を指すように更新します。
                     </p>
                     <button
                       onClick={() =>

@@ -13,22 +13,19 @@ import {
   nodes,
 } from "../../domain/model";
 
+import {
+  ReferenceLinks,
+  ReferencePreview,
+  type ReferenceSelection,
+  ReferenceText,
+} from "./ArticleReference";
+
 export type Mutate = (fn: (document: Document) => void) => void;
-export type DisplayOptions = { hidden?: ReadonlySet<string>; search?: string };
-function Text({ value, search }: { value: string; search?: string }) {
-  if (!search) return <>{value}</>;
-  const parts = value.split(search);
-  return (
-    <>
-      {parts.map((part, i) => (
-        <span key={i}>
-          {i > 0 && <mark className="search-hit">{search}</mark>}
-          {part}
-        </span>
-      ))}
-    </>
-  );
-}
+export type DisplayOptions = {
+  hidden?: ReadonlySet<string>;
+  search?: string;
+  onReferenceNavigate?: (article: Article) => void;
+};
 const find = <T extends Identified>(
   doc: Document,
   uuid: string | undefined,
@@ -87,6 +84,39 @@ export function DocumentBody({
   mutate?: Mutate;
   display?: DisplayOptions;
 }) {
+  const [reference, setReference] = useState<ReferenceSelection | null>(null);
+  const referencedArticle = reference
+    ? (nodes(doc).find((node) => node.uuid === reference.article.uuid) as
+        Article | undefined)
+    : undefined;
+  useEffect(() => {
+    if (reference && !referencedArticle) setReference(null);
+  }, [reference, referencedArticle]);
+  const openReference = (next: ReferenceSelection) =>
+    setReference((previous) =>
+      previous ? { ...next, trigger: previous.trigger } : next,
+    );
+  const closeReference = () => {
+    reference?.trigger.focus({ preventScroll: true });
+    setReference(null);
+  };
+  const renderText = (value: string, source?: Article) => (
+    <ReferenceText
+      value={value}
+      document={doc}
+      source={source}
+      search={display?.search}
+      onOpen={openReference}
+    />
+  );
+  const renderReferences = (value: string, source?: Article) => (
+    <ReferenceLinks
+      value={value}
+      document={doc}
+      source={source}
+      onOpen={openReference}
+    />
+  );
   const [activeNodes, setActiveNodes] = useState<string[]>([]);
   const pointerInProgress = useRef(false);
   // Safariではボタンのmousedownで入力欄のフォーカスが外れる。
@@ -123,6 +153,7 @@ export function DocumentBody({
     <article
       className="law-article"
       id={articleAnchor(a)}
+      tabIndex={-1}
       key={a.uuid}
       hidden={display?.hidden?.has(a.uuid!)}
       data-editor-node={mutate ? a.uuid : undefined}
@@ -251,14 +282,17 @@ export function DocumentBody({
             </span>
             <div className="paragraph-text">
               {mutate ? (
-                <Field
-                  label={`${a.name} 第${i + 1}項の本文`}
-                  value={p.text}
-                  onChange={(v) => set(p.uuid, "text", v)}
-                />
+                <>
+                  <Field
+                    label={`${a.name} 第${i + 1}項の本文`}
+                    value={p.text}
+                    onChange={(v) => set(p.uuid, "text", v)}
+                  />
+                  {renderReferences(p.text, a)}
+                </>
               ) : (
                 <>
-                  <Text value={p.text} search={display?.search} />
+                  {renderText(p.text, a)}
                   <a
                     className="permalink"
                     href={`#${articleAnchor(a)}`}
@@ -353,6 +387,7 @@ export function DocumentBody({
                           value={item.text}
                           onChange={(v) => set(item.uuid, "text", v)}
                         />
+                        {renderReferences(item.text, a)}
                         <div className="node-tools">
                           <button
                             disabled={j === 0}
@@ -393,7 +428,7 @@ export function DocumentBody({
                         </div>
                       </>
                     ) : (
-                      <Text value={item.text} search={display?.search} />
+                      renderText(item.text, a)
                     )}
                   </div>
                 </li>
@@ -430,7 +465,7 @@ export function DocumentBody({
             }
           />
         ) : (
-          <Text value={doc.body} search={display?.search} />
+          renderText(doc.body)
         )}
       </div>
     );
@@ -476,6 +511,15 @@ export function DocumentBody({
           : undefined
       }
     >
+      {reference && referencedArticle && (
+        <ReferencePreview
+          document={doc}
+          selection={{ ...reference, article: referencedArticle }}
+          onOpen={openReference}
+          onClose={closeReference}
+          onNavigate={display?.onReferenceNavigate}
+        />
+      )}
       {(doc.body.preamble || mutate) && (
         <section
           className="preamble"
@@ -494,9 +538,10 @@ export function DocumentBody({
                   })
                 }
               />
+              {renderReferences(doc.body.preamble ?? "")}
             </details>
           ) : (
-            <Text value={doc.body.preamble ?? ""} search={display?.search} />
+            renderText(doc.body.preamble ?? "")
           )}
         </section>
       )}

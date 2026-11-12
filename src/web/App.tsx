@@ -320,7 +320,26 @@ function DocumentReader() {
       ),
     [current, snapshot],
   );
-  const display: DisplayOptions = { hidden, search };
+  const display: DisplayOptions = {
+    hidden,
+    search,
+    onReferenceNavigate: (article) => {
+      setHidden((previous) => {
+        const next = new Set(previous);
+        next.delete("body");
+        next.delete(article.uuid!);
+        if (doc && typeof doc.body !== "string") {
+          for (const section of [
+            ...(doc.body.chapters ?? []),
+            ...(doc.body.supplementaryProvisions ?? []),
+          ]) {
+            if (section.articles.includes(article)) next.delete(section.uuid!);
+          }
+        }
+        return next;
+      });
+    },
+  };
   const updateParams = (nextSha: string, view: boolean) => {
     setParams({
       ...(nextSha ? { revision: nextSha } : {}),
