@@ -111,8 +111,73 @@
             ]
           },
           {
+            "uuid": "077b78d4-d8dc-8b82-a6d0-4b3008698754",
+            "anchor": "officers",
+            "name": "第五条",
+            "caption": "役員",
+            "paragraphs": [
+              {
+                "uuid": "a76f4da9-b7c5-83c6-acaf-74465f7db692",
+                "text": "本会に次の役員をおく。その任期は1年とし、再任はさまたげない。",
+                "items": [
+                  {
+                    "uuid": "a91c83c7-57c5-85b6-a498-20d9597feeb9",
+                    "text": "幹事長 1名"
+                  },
+                  {
+                    "uuid": "0cd38000-83d6-8b22-a00f-29a0351957d0",
+                    "text": "副幹事長 1名"
+                  },
+                  {
+                    "uuid": "b23471c3-2fd9-8300-a0ed-8baf9cb6b1ea",
+                    "text": "会計 1名"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "uuid": "d5f4dd0f-9aaa-8608-a028-504c75ff84ed",
+            "anchor": "officer-duties",
+            "name": "第六条",
+            "caption": "役員の任務",
+            "paragraphs": [
+              {
+                "uuid": "d22f42fb-f84e-89e1-a1fd-c3c0ab946050",
+                "text": "役員の任務は次のとおりとする。",
+                "items": [
+                  {
+                    "uuid": "80889c8f-5909-8105-ac63-5f75555feec5",
+                    "text": "幹事長は、本会を代表し、会務を総括する。"
+                  },
+                  {
+                    "uuid": "e34c3a69-dcdc-877e-acf0-9d6e8a3f34d7",
+                    "text": "副幹事長は、幹事長を補佐し、幹事長に事故あるときは、その職務を代行する。"
+                  },
+                  {
+                    "uuid": "00b6c55e-dd0e-8af1-a3c9-6cdd725dff67",
+                    "text": "会計は、出納事務を掌握する。"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "uuid": "26916dcf-bd7a-857d-ab2e-4239f330b7fd",
+            "anchor": "officer-election",
+            "name": "第七条",
+            "caption": "役員の選出",
+            "paragraphs": [
+              {
+                "uuid": "a59cd89b-a199-88c9-a5df-2ab877136baf",
+                "text": "役員は、早稲田大学に所属する正会員から執行部が選出し、総会の決議をもって決定する。",
+                "items": []
+              }
+            ]
+          },
+          {
             "uuid": "9450f3ea-a202-4cb4-9803-bafaada3e2fa",
-            "name": "第四条の二",
+            "name": "第八条",
             "caption": "執行部",
             "paragraphs": [
               {
@@ -127,7 +192,7 @@
           },
           {
             "uuid": "067259d3-0d26-4c40-8169-0eb826e89746",
-            "name": "第四条の三",
+            "name": "第九条",
             "caption": "運営各部",
             "paragraphs": [
               {
@@ -143,6 +208,22 @@
                 "text": "運営各部の構成員およびその他の事項は、会則および運営規則の範囲内において、各部の長が定めるところによる。"
               }
             ]
+          },
+          {
+            "uuid": "94a4f689-9d3f-8669-a49c-70fbf25741c2",
+            "anchor": "president",
+            "name": "第十条",
+            "caption": "会長",
+            "paragraphs": [
+              {
+                "uuid": "825197a6-acdc-838e-a98d-4844e6d16a88",
+                "text": "本会に会長をおく。"
+              },
+              {
+                "uuid": "c5cb68bd-a7fc-80ed-afbb-b32dcd0240e7",
+                "text": "会長の嘱任は、早稲田大学が行う。"
+              }
+            ]
           }
         ]
       },
@@ -155,7 +236,7 @@
           {
             "uuid": "5ec5cb2e-d521-835d-ac28-b1cd00f9d98b",
             "anchor": "member-rights",
-            "name": "第五条",
+            "name": "第十一条",
             "caption": "会員の権利",
             "paragraphs": [
               {
@@ -181,7 +262,7 @@
           {
             "uuid": "2435d620-7176-8f2d-af4e-abe96fdfed0a",
             "anchor": "member-duties",
-            "name": "第六条",
+            "name": "第十二条",
             "caption": "会員の義務",
             "paragraphs": [
               {
@@ -219,7 +300,7 @@
           {
             "uuid": "b4287d6b-95a0-81d3-a8fe-203126a46288",
             "anchor": "admission",
-            "name": "第七条",
+            "name": "第十三条",
             "caption": "入会",
             "paragraphs": [
               {
@@ -231,7 +312,7 @@
           {
             "uuid": "39fb2fd5-0527-8e70-ac2d-53b8010d39dd",
             "anchor": "loss-of-membership",
-            "name": "第八条",
+            "name": "第十四条",
             "caption": "会員資格の喪失",
             "paragraphs": [
               {
@@ -240,7 +321,7 @@
                 "items": [
                   {
                     "uuid": "5a0d9eb1-1fd1-8c12-ad14-f54eeeddf9aa",
-                    "text": "第6条の義務に違反する行為があったとき"
+                    "text": "第十二条の義務に違反する行為があったとき"
                   },
                   {
                     "uuid": "6908dde3-2eaf-8d0f-a54b-d63921c10ac6",
@@ -257,93 +338,12 @@
           {
             "uuid": "c7de58c3-507b-8bc9-ae8f-9bbcfe972f6f",
             "anchor": "withdrawal",
-            "name": "第九条",
+            "name": "第十五条",
             "caption": "退会",
             "paragraphs": [
               {
                 "uuid": "af9afc04-ed01-899e-a474-599f2ca9a98d",
-                "text": "会員は、執行部の定める退会手続を行うことで退会できる。ただし、第八条に該当するときには、執行部において退会を審議・決裁する。"
-              }
-            ]
-          },
-          {
-            "uuid": "077b78d4-d8dc-8b82-a6d0-4b3008698754",
-            "anchor": "officers",
-            "name": "第十条",
-            "caption": "役員",
-            "paragraphs": [
-              {
-                "uuid": "a76f4da9-b7c5-83c6-acaf-74465f7db692",
-                "text": "本会に次の役員をおく。その任期は1年とし、再任はさまたげない。",
-                "items": [
-                  {
-                    "uuid": "a91c83c7-57c5-85b6-a498-20d9597feeb9",
-                    "text": "幹事長 1名"
-                  },
-                  {
-                    "uuid": "0cd38000-83d6-8b22-a00f-29a0351957d0",
-                    "text": "副幹事長 1名"
-                  },
-                  {
-                    "uuid": "b23471c3-2fd9-8300-a0ed-8baf9cb6b1ea",
-                    "text": "会計 1名"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "uuid": "26916dcf-bd7a-857d-ab2e-4239f330b7fd",
-            "anchor": "officer-election",
-            "name": "第十一条",
-            "caption": "役員の選出",
-            "paragraphs": [
-              {
-                "uuid": "a59cd89b-a199-88c9-a5df-2ab877136baf",
-                "text": "役員は、早稲田大学に所属する正会員から執行部が選出し、総会の決議をもって決定する。",
-                "items": []
-              }
-            ]
-          },
-          {
-            "uuid": "d5f4dd0f-9aaa-8608-a028-504c75ff84ed",
-            "anchor": "officer-duties",
-            "name": "第十二条",
-            "caption": "役員の任務",
-            "paragraphs": [
-              {
-                "uuid": "d22f42fb-f84e-89e1-a1fd-c3c0ab946050",
-                "text": "役員の任務は次のとおりとする。",
-                "items": [
-                  {
-                    "uuid": "80889c8f-5909-8105-ac63-5f75555feec5",
-                    "text": "幹事長は、本会を代表し、会務を総括する。"
-                  },
-                  {
-                    "uuid": "e34c3a69-dcdc-877e-acf0-9d6e8a3f34d7",
-                    "text": "副幹事長は、幹事長を補佐し、幹事長に事故あるときは、その職務を代行する。"
-                  },
-                  {
-                    "uuid": "00b6c55e-dd0e-8af1-a3c9-6cdd725dff67",
-                    "text": "会計は、出納事務を掌握する。"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "uuid": "94a4f689-9d3f-8669-a49c-70fbf25741c2",
-            "anchor": "president",
-            "name": "第十三条",
-            "caption": "会長",
-            "paragraphs": [
-              {
-                "uuid": "825197a6-acdc-838e-a98d-4844e6d16a88",
-                "text": "本会に会長をおく。"
-              },
-              {
-                "uuid": "c5cb68bd-a7fc-80ed-afbb-b32dcd0240e7",
-                "text": "会長の嘱任は、早稲田大学が行う。"
+                "text": "会員は、執行部の定める退会手続を行うことで退会できる。ただし、第十四条に該当するときには、執行部において退会を審議・決裁する。"
               }
             ]
           }
@@ -358,7 +358,7 @@
           {
             "uuid": "2a5fde88-f418-893c-a87c-d5cbb3e957dc",
             "anchor": "general-meeting",
-            "name": "第十四条",
+            "name": "第十六条",
             "caption": "総会",
             "paragraphs": [
               {
@@ -384,7 +384,7 @@
           {
             "uuid": "89c05280-944a-8817-ae17-1e43e491fdeb",
             "anchor": "general-meeting-quorum",
-            "name": "第十五条",
+            "name": "第十七条",
             "caption": "総会の定足数および議決",
             "paragraphs": [
               {
@@ -395,7 +395,7 @@
           },
           {
             "uuid": "f7c991e4-5ead-4b44-bc6d-aad8e7ba139b",
-            "name": "第十五条の二",
+            "name": "第十八条",
             "caption": "執行部会",
             "paragraphs": [
               {
@@ -429,7 +429,7 @@
           {
             "uuid": "4270e7b0-1a23-804b-a9f0-a094e8dd7847",
             "anchor": "board-convocation",
-            "name": "第十六条",
+            "name": "第十九条",
             "caption": "執行部会の招集",
             "paragraphs": [
               {
@@ -441,7 +441,7 @@
           {
             "uuid": "c1487128-b4f5-8499-a687-48d25b736a26",
             "anchor": "board-composition",
-            "name": "第十七条",
+            "name": "第二十条",
             "caption": "執行部会の定足数および議決",
             "paragraphs": [
               {
@@ -464,7 +464,7 @@
           },
           {
             "uuid": "d30ab164-4bbe-4164-80d7-a8a381cdda3d",
-            "name": "第十七条の二",
+            "name": "第二十一条",
             "caption": "非同期の議決",
             "paragraphs": [
               {
@@ -484,7 +484,7 @@
           {
             "uuid": "91efb309-ef46-84fa-a734-4774b10c3873",
             "anchor": "clubroom",
-            "name": "第十八条",
+            "name": "第二十二条",
             "caption": "部室",
             "paragraphs": [
               {
@@ -500,19 +500,19 @@
           {
             "uuid": "ae9c1d43-9590-83f7-a0b0-72bba7c50936",
             "anchor": "clubroom-eligibility",
-            "name": "第十九条",
+            "name": "第二十三条",
             "caption": "部室利用資格",
             "paragraphs": [
               {
                 "uuid": "b8a76a81-764a-8139-a2ed-ea50f2b7911e",
-                "text": "本会の会員は、当然に部室を利用する資格を有する。ただし、第21条に該当するときはその限りではない。"
+                "text": "本会の会員は、当然に部室を利用する資格を有する。ただし、第24条に該当するときはその限りではない。"
               }
             ]
           },
           {
             "uuid": "2d24e7e4-d759-8299-a14b-00c82240d9cf",
             "anchor": "clubroom-eligibility-loss",
-            "name": "第二十一条",
+            "name": "第二十四条",
             "caption": "部室利用資格の喪失",
             "paragraphs": [
               {
@@ -546,7 +546,7 @@
           {
             "uuid": "e7f1468b-cb33-8e78-a1e2-7e6187dade45",
             "anchor": "fiscal-year",
-            "name": "第二十二条",
+            "name": "第二十五条",
             "caption": "会計年度",
             "paragraphs": [
               {
@@ -558,7 +558,7 @@
           {
             "uuid": "d3475be4-6168-8680-a530-a1e44bd19a75",
             "anchor": "expenses",
-            "name": "第二十三条",
+            "name": "第二十六条",
             "caption": "経費",
             "paragraphs": [
               {
@@ -570,7 +570,7 @@
           {
             "uuid": "d4cc4e10-dd21-88cb-a263-27ca0010adbf",
             "anchor": "admission-fee",
-            "name": "第二十四条",
+            "name": "第二十七条",
             "caption": "入会費",
             "paragraphs": [
               {
@@ -591,7 +591,7 @@
           {
             "uuid": "468e361c-c211-8991-a774-b7605ab62f4f",
             "anchor": "membership-fee",
-            "name": "第二十五条",
+            "name": "第二十八条",
             "caption": "会費",
             "paragraphs": [
               {
@@ -619,7 +619,7 @@
           },
           {
             "uuid": "8f8105e0-f428-4804-a6de-3b9483bda626",
-            "name": "第二十五条の二",
+            "name": "第二十九条",
             "caption": "行事参加費",
             "paragraphs": [
               {
@@ -647,7 +647,7 @@
           {
             "uuid": "6bfc325c-99d5-82aa-ad38-216d23b9e6c9",
             "anchor": "amendment",
-            "name": "第二十六条",
+            "name": "第三十条",
             "caption": "会則の変更",
             "paragraphs": [
               {
