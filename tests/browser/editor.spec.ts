@@ -24,11 +24,15 @@ test("ローカルでも未保存の編集を復元し、原本への保存後�
   expect(articles(result.document)[0].paragraphs[0].text).toBe(original);
   await page.getByRole("button", { name: "原本に保存", exact: true }).click();
   await expect(page.getByText("保存済み", { exact: true })).toBeVisible();
-  expect(
-    await page.evaluate(() =>
-      localStorage.getItem("law:draft:v1:local:/:edit:constitution"),
-    ),
-  ).toBeNull();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          localStorage.getItem("law:draft:v1:local:/:edit:constitution") ===
+          null,
+      ),
+    )
+    .toBe(true);
   await page.reload();
   await expect(text).toHaveValue(original + "自動保存テスト。");
   await expect(page.getByText("保存済み", { exact: true })).toBeVisible();
