@@ -199,7 +199,16 @@ test("狭い画面で本文と差分を切り替える", async ({ page }) => {
 test("目次の表示操作とジャンプで履歴を動かさずに本文を移動できる", async ({
   page,
 }) => {
+  const history = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname ===
+      "/api/documents/constitution/history",
+  );
   await page.goto("/laws/constitution/");
+  const revisions = await (await history).json();
+  await expect(page.locator(".revision-list .revision")).toHaveCount(
+    revisions.length + 1,
+  );
   const contents = page.getByRole("navigation", {
     name: "文書の目次",
     exact: true,
@@ -215,9 +224,7 @@ test("目次の表示操作とジャンプで履歴を動かさずに本文を�
   await contents.getByRole("button", { name: "全非表示", exact: true }).click();
   await expect(page.locator("#art-name")).not.toBeVisible();
   await contents.getByRole("button", { name: "全表示", exact: true }).click();
-  await contents
-    .getByRole("link", { name: "第二十六条（会則の変更）", exact: true })
-    .click();
+  await contents.locator('a[href="#art-amendment"]').click();
   await expect(page).toHaveURL(/#art-amendment$/);
   await expect
     .poll(() => page.locator("#reader-scroll").evaluate((e) => e.scrollTop))
@@ -228,7 +235,7 @@ test("目次の表示操作とジャンプで履歴を動かさずに本文を�
   ).toBe(0);
   await page
     .getByRole("searchbox", { name: "文書内検索", exact: true })
-    .fill("理事会");
+    .fill("本会");
   await expect(page.locator("mark.search-hit").first()).toBeAttached();
   await page.getByRole("button", { name: "次を検索", exact: true }).click();
   await page.screenshot({ path: "test-results/reader-navigation.png" });
@@ -271,7 +278,7 @@ test("モバイルの目次から条文へ移動すると本文に戻る", async
   await expect(page.locator(".reader-sidebar")).toBeVisible();
   await page
     .getByRole("navigation", { name: "文書の目次", exact: true })
-    .getByRole("link", { name: "第六条（会員の義務）", exact: true })
+    .locator('a[href="#art-member-duties"]')
     .click();
   await expect(page.locator(".reader-sidebar")).not.toBeVisible();
   await expect(page.locator("#art-member-duties")).toBeInViewport();

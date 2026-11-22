@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
-import { articles } from "../../src/domain/model";
+import { articles, withUUIDs } from "../../src/domain/model";
 import { validate } from "../../src/domain/validation";
 
 const base = process.env.LAW_BASE_PATH ?? "/";
@@ -58,21 +58,51 @@ test("参照先を小窓で表示し、移動・閉じる・非表示の条へ�
 });
 
 test("号の算用数字の参照から全項を表示できる", async ({ page }) => {
-  await page.goto(publicURL("laws/constitution/"));
+  const fixture = withUUIDs({
+    schemaVersion: 1,
+    id: "numbered-item-reference",
+    title: "条文参照のテスト用規則",
+    kind: "運営規則",
+    status: "active",
+    body: {
+      articles: [
+        {
+          name: "第一条",
+          caption: "参照先",
+          paragraphs: [{ text: "最初の項。" }, { text: "二番目の項。" }],
+        },
+        {
+          name: "第二条",
+          paragraphs: [
+            {
+              text: "次の各号による。",
+              items: [{ text: "第1条を適用する。" }],
+            },
+          ],
+        },
+      ],
+    },
+  });
+  const session = await (await page.request.get("/api/session")).json();
+  const created = await page.request.post("/api/documents", {
+    data: fixture,
+    headers: { "X-Law-Token": session.csrf },
+  });
+  expect(created.status()).toBe(201);
+  await page.goto(`/laws/${fixture.id}/`);
   await page
-    .locator(".law-items .article-reference")
-    .filter({ hasText: "第6条" })
+    .locator(".law-items")
+    .getByRole("link", { name: "第1条", exact: true })
     .click();
   const preview = page.getByRole("dialog", {
-    name: "第六条の参照先",
+    name: "第一条の参照先",
     exact: true,
   });
   await expect(preview).toBeVisible();
-  await expect(preview).toContainText("会員の義務");
-  const count = await page
-    .locator("#art-member-duties .paragraph-block")
-    .count();
-  await expect(preview.locator(".paragraph-block")).toHaveCount(count);
+  await expect(preview.locator(".paragraph-block")).toHaveText([
+    /最初の項。/,
+    /二番目の項。/,
+  ]);
   await preview
     .getByRole("button", { name: "参照先を閉じる", exact: true })
     .click();
@@ -100,6 +130,14 @@ test("挿入と再採番で参照先を保ち、Undo・Redo・復元・JSONに�
   await page.goto(publicURL("edit/constitution/"));
   const purpose = page.locator("#art-purpose");
   const activities = page.locator("#art-activities");
+  const dutiesName = page.locator("#art-member-duties").getByLabel(/条の名称$/);
+  const dutiesReference = page
+    .locator("#art-loss-of-membership .law-items")
+    .getByRole("textbox")
+    .first();
+  const originalDutiesName = await dutiesName.inputValue();
+  const originalReference = await dutiesReference.inputValue();
+  expect(originalReference).toContain(originalDutiesName);
   await purpose
     .getByRole("textbox", { name: "第二条 第1項の本文", exact: true })
     .click();
@@ -132,9 +170,11 @@ test("挿入と再採番で参照先を保ち、Undo・Redo・復元・JSONに�
     exact: true,
   });
   await expect(text).toHaveValue(/本会は、第三条の目的/);
-  await expect(
-    page.getByRole("textbox", { name: "第九条 第1項 第1号", exact: true }),
-  ).toHaveValue("第7条の義務に違反する行為があったとき");
+  const renumberedDutiesName = await dutiesName.inputValue();
+  expect(renumberedDutiesName).not.toBe(originalDutiesName);
+  await expect(dutiesReference).toHaveValue(
+    originalReference.replace(originalDutiesName, renumberedDutiesName),
+  );
   await activities.getByRole("link", { name: "第三条", exact: true }).click();
   await expect(
     page.getByRole("dialog", { name: "第三条の参照先", exact: true }),
