@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { type Page, expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
 import { articles, serialize } from "../../src/domain/model";
@@ -6,6 +6,10 @@ import { validate } from "../../src/domain/validation";
 
 const base = process.env.LAW_BASE_PATH ?? "/";
 const publicURL = (path: string) => `http://127.0.0.1:3108${base}${path}`;
+const publishedConstitution = (page: Page) =>
+  page.evaluate(() =>
+    window.__LAW_DATA__.documents.find((doc) => doc.id === "constitution")!,
+  );
 
 test("公開HTMLはJSなしで直接閲覧でき、編集APIを含まない", async ({
   browser,
@@ -56,21 +60,17 @@ test("公開ページのbase path・hydration・Git履歴が動く", async ({ pa
     name: "文書の目次",
     exact: true,
   });
-  await contents
-    .getByRole("link", { name: "第二十六条（会則の変更）", exact: true })
-    .click();
+  await contents.locator('a[href="#art-amendment"]').click();
   await expect(page).toHaveURL(/#art-amendment$/);
   await expect
     .poll(() => page.locator("#reader-scroll").evaluate((e) => e.scrollTop))
     .toBeGreaterThan(100);
+  const amendment = body.locator("#art-amendment");
+  await expect(amendment).toBeVisible();
   await contents.getByRole("button", { name: "全非表示", exact: true }).click();
-  if (revisions.length)
-    await expect(body).not.toContainText("本会則を変更する場合");
-  else await expect(page.locator("#art-amendment")).not.toBeVisible();
+  await expect(amendment).not.toBeVisible();
   await contents.getByRole("button", { name: "全表示", exact: true }).click();
-  await expect(body).toContainText("本会則を変更する場合");
-  if (!revisions.length)
-    await expect(page.locator("#art-amendment")).toBeVisible();
+  await expect(amendment).toBeVisible();
   await page.reload();
   await expect(body).toBeVisible();
   expect(errors).toEqual([]);
@@ -87,7 +87,7 @@ test("公開ページで編集したJSONをダウンロードでき、公開中�
       apiRequests.push(request.url());
   });
   await page.goto(publicURL("laws/constitution/"));
-  const original = await page.evaluate(() => window.__LAW_DATA__.documents[0]!);
+  const original = await publishedConstitution(page);
   await page.getByRole("link", { name: "編集する", exact: true }).click();
   await expect(page).toHaveURL(publicURL("edit/constitution/"));
   const text = page.getByRole("textbox", {
@@ -126,9 +126,7 @@ test("公開ページで編集したJSONをダウンロードでき、公開中�
   await expect(page.locator("#art-name")).not.toContainText(
     "公開版の編集テスト",
   );
-  expect(await page.evaluate(() => window.__LAW_DATA__.documents[0])).toEqual(
-    original,
-  );
+  expect(await publishedConstitution(page)).toEqual(original);
   await page.goto(publicURL("edit/constitution/"));
   await expect(text).toHaveValue(body + "公開版の編集テスト。");
   await expect(
@@ -235,7 +233,7 @@ test("公開ページでJSONを検証して読み込み、差分を確認しな�
       apiRequests.push(request.url());
   });
   await page.goto(publicURL(""));
-  const original = await page.evaluate(() => window.__LAW_DATA__.documents[0]!);
+  const original = await publishedConstitution(page);
   await page.getByRole("link", { name: "JSONから編集", exact: true }).click();
   const upload = page.getByLabel("編集済みJSON", { exact: true });
   for (const contents of ["{", JSON.stringify({ id: "invalid" })]) {
@@ -276,9 +274,7 @@ test("公開ページでJSONを検証して読み込み、差分を確認しな�
     serialize(edited),
   );
   await page.getByRole("link", { name: "閲覧に戻る", exact: true }).click();
-  expect(await page.evaluate(() => window.__LAW_DATA__.documents[0])).toEqual(
-    original,
-  );
+  expect(await publishedConstitution(page)).toEqual(original);
   expect(apiRequests).toEqual([]);
   expect(errors).toEqual([]);
 });

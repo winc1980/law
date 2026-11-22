@@ -104,18 +104,22 @@ test("条・項・号をボタンで追加・削除し、Undoと保存に反映�
   await expect(article).toBeVisible();
 
   // 既存の条・項も削除でき、保存後の原本と差分に反映される。
-  const originalSecond = first.locator(".paragraph-block").nth(1);
-  const thirdText = await first
-    .getByRole("textbox", { name: "第一条 第3項の本文", exact: true })
+  const membershipFee = page.locator("#art-membership-fee");
+  const feeParagraphs = membershipFee.locator(".paragraph-block");
+  const feeParagraphCount = await feeParagraphs.count();
+  const originalSecond = feeParagraphs.nth(1);
+  const thirdText = await feeParagraphs
+    .nth(2)
+    .getByRole("textbox")
     .inputValue();
   await originalSecond.getByRole("textbox").click();
   await originalSecond
     .getByRole("button", { name: "項を削除", exact: true })
     .click();
-  await expect(
-    first.getByRole("textbox", { name: "第一条 第2項の本文", exact: true }),
-  ).toHaveValue(thirdText);
-  await expect(first.locator(".paragraph-block")).toHaveCount(2);
+  await expect(feeParagraphs.nth(1).getByRole("textbox")).toHaveValue(
+    thirdText,
+  );
+  await expect(feeParagraphs).toHaveCount(feeParagraphCount - 1);
   const removedArticle = page.locator("#art-activities");
   await removedArticle
     .getByRole("textbox", { name: "第三条 第1項の本文", exact: true })
@@ -131,7 +135,10 @@ test("条・項・号をボタンで追加・削除し、Undoと保存に反映�
   await expect(
     page.getByRole("textbox", { name: "第一条の二 第1項の本文", exact: true }),
   ).toHaveValue("追加条の本文。");
-  await expect(page.locator("#art-name .paragraph-block")).toHaveCount(2);
+  await expect(feeParagraphs).toHaveCount(feeParagraphCount - 1);
+  await expect(feeParagraphs.nth(1).getByRole("textbox")).toHaveValue(
+    thirdText,
+  );
   await expect(page.locator("#art-activities")).toHaveCount(0);
   expect(errors).toEqual([]);
 });
